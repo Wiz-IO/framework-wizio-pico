@@ -3,5 +3,5 @@
     "description": "WizIO Pi Pico Frameworks for PlatformIO",
     "url": "https://github.com/Wiz-IO/framework-wizio-pico",
     "system": "*",
-    "version": "0.0.7"
+    "version": "1.0.0"
 }
