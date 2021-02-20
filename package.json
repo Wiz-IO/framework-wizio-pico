@@ -1,0 +1,7 @@
+{
+    "name": "framework-wizio-pico",
+    "description": "WizIO Pi Pico Frameworks for PlatformIO",
+    "url": "",
+    "system": "*",
+    "version": "1.0.0"
+}
