@@ -39,6 +39,9 @@ extern "C"
 #include <sys/time.h>
 
 #include "pico/stdlib.h"
+#include "hardware/gpio.h"
+#include "hardware/uart.h"
+#include "hardware/rtc.h"
 
 #include <debug.h>
 

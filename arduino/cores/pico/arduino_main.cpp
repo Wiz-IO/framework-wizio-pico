@@ -21,8 +21,21 @@ extern void setup();
 extern void loop();
 
 extern "C" int main(void)
-{       
-    stdio_init_all();
+{
+    //stdio_init_all(); // not need - port use gcc stdio
+
+    // TODO SET RTC
+    datetime_t t = {
+        .year = 2021,
+        .month = 1,
+        .day = 1,
+        .dotw = 0,
+        .hour = 0,
+        .min = 0,
+        .sec = 0};
+    rtc_init();           // Start the RTC
+    rtc_set_datetime(&t); // ???
+
     initVariant();
     setup();
     while (1)

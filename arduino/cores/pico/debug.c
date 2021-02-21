@@ -18,5 +18,29 @@
 
 #include "debug.h"
 
-//_ssize_t _write_r(struct _reent *ignore, int fd, const void *buf, size_t len) { return 0; }
-//_ssize_t _read_r(struct _reent *ignore, int fd, void *buf, size_t len) { return 0; }
+static int dbg_write_r(struct _reent *r, _PTR ctx, const char *buf, int len)
+{
+    if (len)
+    {
+        uart_write_blocking(stdout->_cookie, (const uint8_t *)buf, len);
+    }
+    return len;
+}
+
+static uart_inst_t *log_uart = 0;
+
+void dbg_retarget(uart_inst_t *u)
+{
+    extern void __sinit(struct _reent * s);
+    __sinit(_impure_ptr);
+
+    stdout->_cookie = u;
+    stdout->_file = STDOUT_FILENO;
+    stdout->_flags = __SWID | __SWR | __SNBF;
+    stdout->_write = dbg_write_r; // only write
+    setvbuf(stdout, NULL, _IONBF, 0);
+
+    printf("[SYS] PRINTF DEBUG\n");
+
+    log_uart = u;
+}

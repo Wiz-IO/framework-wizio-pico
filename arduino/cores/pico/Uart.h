@@ -99,7 +99,8 @@ public:
         irq_set_enabled(UART_IRQ, true);
         uart_set_irq_enables(u, true, false);
 
-        //if (dbg) dbg_retarget(u);
+        if (dbg)
+            dbg_retarget(u);
     }
 
     void begin(unsigned long brg, bool dbg = false)

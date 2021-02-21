@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright 2020 Georgi Angelov ver 2.0
+// Copyright 2020 Georgi Angelov ver 1.0
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,10 @@ extern "C"
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "hardware/uart.h"
+
+// Retarget printf() Serial.begin(115200, true);
+void dbg_retarget(uart_inst_t *uart);
 
 #ifdef __cplusplus
 }
