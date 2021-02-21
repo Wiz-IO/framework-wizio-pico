@@ -29,17 +29,17 @@ extern "C"
     /* C ware          */
 
 #define PINS_COUNT 30
+
 #define LED 25
 
-#define PIN_TEMPERATURE PINS_COUNT
     typedef enum
     {
-        ADC0,
-        ADC1,
-        ADC2,
-        ADC3,
-        ADC_TEMPERATURE
-    } adc_e;
+        ADC_0,
+        ADC_1,
+        ADC_2,
+        ADC_3,
+        ADC_T
+    } adc_channel_e;
 
 #ifdef __cplusplus
 }
