@@ -20,6 +20,8 @@
 
 #ifdef __cplusplus
 
+#error "SPI LIBRARY IS NOT READY"
+
 #include "interface.h"
 #include "constants.h"
 #include "Stream.h"
