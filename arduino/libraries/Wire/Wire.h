@@ -19,6 +19,8 @@
 #define __WIRE_H__
 #ifdef __cplusplus
 
+#error "WIRE LIBRARY IS NOT READY"
+
 #include "interface.h"
 #include "Stream.h"
 #include "variant.h"
