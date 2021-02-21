@@ -60,6 +60,11 @@ extern "C"
                        : "memory");
     }
 
+    static inline void interrupts(void) { __enable_irq(); }
+    static inline void noInterrupts(void) { __disable_irq(); }
+
+    void attachInterruptEx(uint8_t pin, void (*cb)(uint32_t pin_event), int mode); // enum gpio_irq_level
+
     static inline unsigned int millis(void)
     {
         return time_us_64() / 1000;
@@ -101,9 +106,7 @@ extern "C"
     void analogInit(uint8_t pin);
     int analogRead(uint8_t pin);
     void analogWrite(uint8_t pin, int val);
-
-    void interrupts(void);
-    void noInterrupts(void);
+    float temperatureRead(void);
 
     void initVariant(void) __attribute__((weak));
 
