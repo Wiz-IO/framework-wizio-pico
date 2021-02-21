@@ -103,8 +103,8 @@ extern "C"
     uint32_t clockCyclesToMicroseconds(uint32_t a);
     uint32_t microsecondsToClockCycles(uint32_t a);
 
-    void analogInit(uint8_t pin);
-    int analogRead(uint8_t pin);
+    void analogInit(uint8_t adc_channel);
+    int analogRead(uint8_t adc_channel);
     void analogWrite(uint8_t pin, int val);
     float temperatureRead(void);
 
