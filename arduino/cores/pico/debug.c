@@ -40,7 +40,7 @@ void dbg_retarget(uart_inst_t *u)
     stdout->_write = dbg_write_r; // only write
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    printf("[SYS] PRINTF DEBUG\n");
+    //printf("[SYS] PRINTF DEBUG\n");
 
     log_uart = u;
 }
