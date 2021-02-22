@@ -1,7 +1,4 @@
 /*
-    TODO
-    
-    Author: Georgi Angelov
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -13,13 +10,13 @@
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA   
+
+    Author: Georgi Angelov  
  */
 
 #ifndef __WIRE_H__
 #define __WIRE_H__
 #ifdef __cplusplus
-
-#error "WIRE LIBRARY IS NOT READY"
 
 #include "interface.h"
 #include "Stream.h"
@@ -27,12 +24,15 @@
 #include "RingBuffer.h"
 #include "hardware/i2c.h"
 
-
 class TwoWire : public Stream
 {
 private:
     int _sda, _scl;
     uint32_t _timeOutMillis;
+    bool transmissionBegun;
+    RingBuffer rx, tx;
+    uint8_t SlaveAddress;
+    i2c_inst_t *ctx;
 
 public:
     TwoWire(i2c_inst_t *contex, uint32_t speed_Hz = 100000)
@@ -45,18 +45,17 @@ public:
 
     ~TwoWire() { end(); }
 
-    bool setPins(int sdaPin, int sclPin, bool pull = true)
+    void setPins(int sdaPin, int sclPin, bool enablePullup = true)
     {
         _sda = sdaPin;
         _scl = sclPin;
         gpio_set_function(sdaPin, GPIO_FUNC_I2C);
         gpio_set_function(sclPin, GPIO_FUNC_I2C);
-        if (pull)
+        if (enablePullup)
         {
             gpio_pull_up(sdaPin);
             gpio_pull_up(sclPin);
         }
-        return true;
     }
 
     void setTimeOut(uint32_t timeOutMillis) { _timeOutMillis = timeOutMillis; }
@@ -96,14 +95,6 @@ public:
     void onService(void){};
     void onReceive(void (*)(int)){};
     void onRequest(void (*)(void)){};
-
-private:
-    bool transmissionBegun;
-
-    RingBuffer rx, tx;
-
-    uint8_t SlaveAddress;
-    i2c_inst_t *ctx;
 };
 
 extern TwoWire Wire;

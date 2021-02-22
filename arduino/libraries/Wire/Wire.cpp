@@ -1,7 +1,4 @@
 /*
-    TODO
-
-    Author: Georgi Angelov
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -12,7 +9,9 @@
   Lesser General Public License for more details.
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA   
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA  
+
+     Author: Georgi Angelov  
  */
 
 #include <Arduino.h>
@@ -52,7 +51,12 @@ uint8_t TwoWire::endTransmission(bool stopBit)
     transmissionBegun = false;
     int size = tx.available();
     int res = i2c_write_timeout_us(ctx, SlaveAddress, tx._aucBuffer, size, false, _timeOutMillis);
-    return res == size ? 0 : 0; // 0:success or 4:other error
+    return res == size ? 0 : 4;
+    // 0:success
+    // 1:data too long to fit in transmit buffer
+    // 2:received NACK on transmit of address
+    // 3:received NACK on transmit of data
+    // 4:other error
 }
 
 uint8_t TwoWire::endTransmission() { return endTransmission(true); }
