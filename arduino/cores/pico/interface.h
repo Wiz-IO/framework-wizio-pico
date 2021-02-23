@@ -39,9 +39,12 @@ extern "C"
 #include <sys/time.h>
 
 #include "pico/stdlib.h"
+#include "pico/divider.h"   
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/rtc.h"
+#include "hardware/divider.h"
+#include "hardware/clocks.h"
 
 #include <debug.h>
 
@@ -70,7 +73,8 @@ extern "C"
 
     static inline unsigned int millis(void)
     {
-        return time_us_64() / 1000;
+        //return time_us_64() / 1000;
+        return div_u64u64(time_us_64(), 1000);
     }
 
     static inline unsigned int micros(void)
