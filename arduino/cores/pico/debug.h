@@ -29,7 +29,7 @@ extern "C"
 #include "hardware/uart.h"
 
 // Retarget printf() Serial.begin(115200, true);
-void dbg_retarget(uart_inst_t *uart);
+void dbg_retarget(void *uart);
 
 #ifdef __cplusplus
 }

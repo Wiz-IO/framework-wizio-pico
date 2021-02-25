@@ -152,6 +152,17 @@ int _gettimeofday_r(struct _reent *ignore, struct timeval *tv, void *tz) /* time
 // Executed before main (crt0.S)
 void system_init(void)
 {
+    // need to link boot2
     void add_bootloader(void);
-    add_bootloader(); // need to link boot2
+    add_bootloader();
+
+    extern void __sinit(struct _reent * s);
+    __sinit(_impure_ptr);
+    stdout->_cookie = 0;
+    stderr->_cookie = 0;
+    stdin->_cookie = 0;
+
+    // build_flags = -D PICO_STDIO_USB
+    bool stdio_usb_init(void);
+    stdio_usb_init();
 }

@@ -18,29 +18,60 @@
 
 #include "debug.h"
 
+void stdio_usb_out_chars(const char *buf, int length);
+int stdio_usb_in_chars(char *buf, int length);
+
 static int dbg_write_r(struct _reent *r, _PTR ctx, const char *buf, int len)
 {
-    if (len)
+    if (len && stdout->_cookie)
     {
-        uart_write_blocking(stdout->_cookie, (const uint8_t *)buf, len);
+        if ((void *)1 == stdout->_cookie)
+            stdio_usb_out_chars(buf, len);
+        else
+            uart_write_blocking(stdout->_cookie, (const uint8_t *)buf, len);
     }
-    return len;
+    return -1;
 }
 
-static uart_inst_t *log_uart = 0;
+static int dbg_read_r(struct _reent *r, _PTR ctx, char *buf, int len)
+{
+    int rc;
+    if (len && stdin->_cookie)
+    {
+        if ((void *)1 == stdin->_cookie)
+        {
+            rc = stdio_usb_in_chars(buf, len);
+            return rc < 0 ? -1 : rc;
+        }
+        else
+        {
+            uart_read_blocking(stdin->_cookie, (uint8_t *)buf, len);
+            return len;
+        }
+    }
+    return -1;
+}
 
-void dbg_retarget(uart_inst_t *u)
+void dbg_retarget(void *u)
 {
     extern void __sinit(struct _reent * s);
     __sinit(_impure_ptr);
 
+    /* STDOUT */
     stdout->_cookie = u;
-    stdout->_file = STDOUT_FILENO;
     stdout->_flags = __SWID | __SWR | __SNBF;
-    stdout->_write = dbg_write_r; // only write
+    stdout->_write = dbg_write_r;
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    //printf("[SYS] PRINTF DEBUG\n");
+    /* STDERR */
+    stderr->_cookie = u;
+    stderr->_write = dbg_write_r;
+    stdout->_flags = __SWID | __SWR | __SNBF;
+    setvbuf(stderr, NULL, _IONBF, 0);
 
-    log_uart = u;
+    /* STDIN */
+    stdin->_cookie = u;
+    stdin->_read = dbg_read_r;
+    stdin->_flags = __SWID | __SRD | __SNBF;
+    setvbuf(stdin, NULL, _IONBF, 0);
 }

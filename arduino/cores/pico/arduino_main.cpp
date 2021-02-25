@@ -16,14 +16,11 @@
 
 #include <interface.h>
 
-extern "C" void system_init(void);
 extern void setup();
 extern void loop();
 
 extern "C" int main(void)
 {
-    //stdio_init_all(); // not need - port use gcc stdio
-
     // TODO SET RTC
     datetime_t t = {
         .year = 2021,
@@ -33,8 +30,8 @@ extern "C" int main(void)
         .hour = 0,
         .min = 0,
         .sec = 0};
-    rtc_init();           // Start the RTC
-    rtc_set_datetime(&t); // ???
+    rtc_init(); // Start the RTC
+    rtc_set_datetime(&t);
 
     initVariant();
     setup();
