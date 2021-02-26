@@ -25,8 +25,8 @@ drv_t stdio_drv;
 
 void dbg_retarget(void *p)
 {
-    extern void __sinit(struct _reent * s);
-    __sinit(_impure_ptr);
+    //extern void __sinit(struct _reent * s);
+    //__sinit(_impure_ptr);
 
     /* STDOUT */
     stdout->_cookie = p;

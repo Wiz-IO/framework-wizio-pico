@@ -102,7 +102,6 @@ public:
         uart_set_irq_enables(u, true, false);
         if (retarget)
         {
-            delay(1);
             stdio_drv.write_r = u_write_r;
             stdio_drv.read_r = u_read_r;
             stdio_drv.ctx = this;

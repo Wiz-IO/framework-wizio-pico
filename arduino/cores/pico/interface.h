@@ -39,12 +39,17 @@ extern "C"
 #include <sys/time.h>
 
 #include "pico/stdlib.h"
-#include "pico/divider.h"   
+#include "pico/divider.h"
 #include "hardware/gpio.h"
 #include "hardware/uart.h"
 #include "hardware/rtc.h"
 #include "hardware/divider.h"
 #include "hardware/clocks.h"
+
+#ifdef FREERTOS
+#include "FreeRTOS.h"
+#include "task.h"
+#endif
 
 #include <debug.h>
 
@@ -71,26 +76,23 @@ extern "C"
 
     void attachInterruptEx(uint8_t pin, void (*cb)(uint32_t pin_event), int mode); // enum gpio_irq_level
 
-    static inline unsigned int millis(void)
-    {
-        //return time_us_64() / 1000;
-        return div_u64u64(time_us_64(), 1000);
-    }
+    static inline unsigned int millis(void) { return div_u64u64(time_us_64(), 1000); }
 
-    static inline unsigned int micros(void)
-    {
-        return time_us_32();
-    }
+    static inline unsigned int micros(void) { return time_us_32(); }
 
-    static inline unsigned int seconds(void)
-    {
-        return millis() / 1000;
-    }
+    static inline unsigned int seconds(void) { return millis() / 1000; }
 
+#ifndef FREERTOS
     static inline void delay(unsigned int ms)
     {
         sleep_ms(ms);
     }
+#else
+static inline void delay(unsigned int ms)
+{
+    vTaskDelay(ms);
+}
+#endif
 
     static inline void delayMicroseconds(unsigned int us)
     {
@@ -99,7 +101,7 @@ extern "C"
 
     static inline void delaySeconds(unsigned int s)
     {
-        sleep_ms(s * 1000);
+        delay(s * 1000);
     };
 
     char *utoa(unsigned int value, char *buffer, int radix);
