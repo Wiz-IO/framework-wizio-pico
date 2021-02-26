@@ -26,10 +26,17 @@ extern "C"
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "hardware/uart.h"
 
-// Retarget printf() Serial.begin(115200, true);
-void dbg_retarget(void *uart);
+    typedef struct
+    {
+        void *ctx;
+        int (*write_r)(struct _reent *r, _PTR ctx, const char *buf, int len);
+        int (*read_r)(struct _reent *r, _PTR ctx, char *buf, int len);
+    } drv_t;
+
+    extern drv_t stdio_drv;
+
+    void dbg_retarget(void *p);
 
 #ifdef __cplusplus
 }

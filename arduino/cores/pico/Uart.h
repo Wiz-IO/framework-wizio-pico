@@ -29,15 +29,17 @@
 
 typedef struct tag_UART_CONTEXT
 {
-    void *user; // class Uart
-    uart_inst_t *UART;
+    void *cUart; 
     void (*rx_handler)(void);
-    void (*tx_handler)(void);
 } UART_CONTEXT, *pUART_CONTEXT;
-extern UART_CONTEXT UARTINFO[2];
+
+extern UART_CONTEXT UARTINFO[2]; // variant.cpp
 
 static void u0_rx_handler(void);
 static void u1_rx_handler(void);
+
+static int u_write_r(struct _reent *r, _PTR ctx, const char *buf, int len);
+static int u_read_r(struct _reent *r, _PTR ctx, char *buf, int len);
 
 class Uart : public HardwareSerial
 {
@@ -47,13 +49,15 @@ private:
     RingBuffer rx_ring; // [1024]
     uint32_t _brg;
     int UART_IRQ;
+    int TX_PIN, RX_PIN;
 
 public:
     Uart(uart_inst_t *uart)
     {
         u = uart;
         _brg = 0;
-        int TX_PIN = 0, RX_PIN = 1;
+        TX_PIN = 0;
+        RX_PIN = 1;
         UART_IRQ = UART0_IRQ;
         if (u == uart0)
         {
@@ -70,9 +74,7 @@ public:
             TX_PIN = 4; // TODO
             RX_PIN = 5; // TODO
         }
-
-        ctx->user = this;
-        pins(TX_PIN, RX_PIN);
+        ctx->cUart = this;
     }
 
     ~Uart()
@@ -86,26 +88,31 @@ public:
         gpio_set_function(rx, GPIO_FUNC_UART);
     }
 
-    void begin(unsigned long brg, unsigned int data_bits, unsigned int stop_bits, unsigned int parity, bool dbg = false)
+    void begin(unsigned long brg, unsigned int data_bits, unsigned int stop_bits, unsigned int parity, bool retarget = false)
     {
         end();
+        pins(TX_PIN, RX_PIN);
         uart_init(u, brg);
         _brg = uart_set_baudrate(u, brg);
         uart_set_hw_flow(u, false, false);
         uart_set_format(u, data_bits, stop_bits, (uart_parity_t)parity);
         uart_set_fifo_enabled(u, false);
-
         irq_set_exclusive_handler(UART_IRQ, ctx->rx_handler);
         irq_set_enabled(UART_IRQ, true);
         uart_set_irq_enables(u, true, false);
-
-        if (dbg)
-            dbg_retarget(u);
+        if (retarget)
+        {
+            delay(1);
+            stdio_drv.write_r = u_write_r;
+            stdio_drv.read_r = u_read_r;
+            stdio_drv.ctx = this;
+            dbg_retarget(&stdio_drv);
+        }
     }
 
-    void begin(unsigned long brg, bool dbg = false)
+    void begin(unsigned long brg, bool retarget = false)
     {
-        begin(brg, 8, 1, UART_PARITY_NONE, dbg);
+        begin(brg, 8, 1, UART_PARITY_NONE, retarget);
     }
 
     void end(void)
@@ -117,14 +124,8 @@ public:
 
     size_t write(uint8_t c)
     {
-        uart_putc_raw(u, c);
+        uart_write_blocking(u, (const uint8_t *)&c, 1);
         return 1;
-    }
-
-    size_t write(uint8_t *buf, size_t size)
-    {
-        uart_write_blocking(u, buf, size);
-        return size;
     }
 
     int read()
@@ -148,31 +149,25 @@ public:
         }
         return cnt;
     }
+    int read(char *buf, size_t size) { return read((uint8_t *)buf, size); }
 
-    int available(void)
-    {
-        return rx_ring.available();
-    }
+    int available(void) { return rx_ring.available(); }
 
-    int peek(void)
-    {
-        return rx_ring.peek();
-    }
+    int peek(void) { return rx_ring.peek(); }
 
     void flush(void) {}
 
-    int setSpeed(int brg)
-    {
-        return _brg = uart_set_baudrate(u, brg);
-    }
+    int setSpeed(int brg) { return _brg = uart_set_baudrate(u, brg); }
 
-    int getSpeed()
-    {
-        return _brg;
-    }
+    int getSpeed() { return _brg; }
 
-    void save()
+    operator bool() { return true; }
+
+    using Print::write;
+
+    void isr_save()
     {
+        __disable_irq();
         while (uart_is_readable(u))
         {
             if (rx_ring.availableForStore())
@@ -180,24 +175,27 @@ public:
             else
                 break;
         }
+        __enable_irq();
     }
 
-    operator bool()
+    static int u_write_r(struct _reent *r, _PTR p, const char *buf, int len)
     {
-        return true;
+        drv_t *d = (drv_t *)p;
+        Uart *THIS = (Uart *)d->ctx;
+        return THIS->write(buf, len);
     }
 
-    using Print::write;
+    static int u_read_r(struct _reent *r, _PTR p, char *buf, int len)
+    {
+        drv_t *d = (drv_t *)p;
+        Uart *THIS = (Uart *)d->ctx;
+        return THIS->read(buf, len);
+    }
 };
 
-static void u_rx_handler(Uart *ctx)
-{
-    __disable_irq();
-    ctx->save();
-    __enable_irq();
-}
-static void u0_rx_handler(void) { u_rx_handler((Uart *)UARTINFO[0].user); }
-static void u1_rx_handler(void) { u_rx_handler((Uart *)UARTINFO[1].user); }
+static void u_rx_handler(Uart *ctx) { ctx->isr_save(); }
+static void u0_rx_handler(void) { u_rx_handler((Uart *)UARTINFO[0].cUart); }
+static void u1_rx_handler(void) { u_rx_handler((Uart *)UARTINFO[1].cUart); }
 
 extern Uart Serial;
 extern Uart Serial1;

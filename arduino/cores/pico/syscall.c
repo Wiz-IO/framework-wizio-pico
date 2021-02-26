@@ -38,7 +38,7 @@ int _isatty(int fd)
     return ((fd == STDOUT_FILENO) || (fd == STDERR_FILENO) || (fd == STDIN_FILENO));
 }
 
-_off_t _lseek_r(struct _reent *ignore, int fd, _off_t where, int whence)
+_off_t _lseek_r(struct _reent *r, int fd, _off_t where, int whence)
 {
 #ifdef USE_FS
     return vfs_seek(fd, where, whence);
@@ -46,7 +46,7 @@ _off_t _lseek_r(struct _reent *ignore, int fd, _off_t where, int whence)
     return -1;
 }
 
-int _fstat_r(struct _reent *ignore, int fd, struct stat *st)
+int _fstat_r(struct _reent *r, int fd, struct stat *st)
 {
 #ifdef USE_FS
 // TODO
@@ -54,7 +54,7 @@ int _fstat_r(struct _reent *ignore, int fd, struct stat *st)
     return -1;
 }
 
-int _close_r(struct _reent *ignore, int fd)
+int _close_r(struct _reent *r, int fd)
 {
 #ifdef USE_FS
     return vfs_close(fd);
@@ -62,7 +62,7 @@ int _close_r(struct _reent *ignore, int fd)
     return -1;
 }
 
-int _open_r(struct _reent *ignore, const char *path, int flags, int mode)
+int _open_r(struct _reent *r, const char *path, int flags, int mode)
 {
 #ifdef USE_FS
     return vfs_open(path, flags, mode);
@@ -70,26 +70,26 @@ int _open_r(struct _reent *ignore, const char *path, int flags, int mode)
     return -1;
 }
 
-_ssize_t _write_r(struct _reent *ignore, int fd, const void *buf, size_t len)
+_ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
 {
     if (fd < 0 || !buf || !len)
         return 0;
-    if ((fd == STDOUT_FILENO) || (fd == STDERR_FILENO)) // for printf
+    if ((fd == STDOUT_FILENO) || (fd == STDERR_FILENO))
         if (stdout->_cookie && stdout->_write)
-            return stdout->_write(0, stdout->_cookie, buf, len);
+            return stdout->_write(r, stdout->_cookie, buf, len);
 #ifdef USE_FS
     return vfs_write(fd, buf, len);
 #endif
     return 0;
 }
 
-_ssize_t _read_r(struct _reent *ignore, int fd, void *buf, size_t len)
+_ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
 {
     if (fd < 0 || !buf || !len)
         return 0;
-    if (fd == STDIN_FILENO) // is not set, by default
+    if (fd == STDIN_FILENO)
         if (stdin->_cookie && stdin->_read)
-            return stdout->_read(0, stdout->_cookie, buf, len);
+            return stdin->_read(r, stdin->_cookie, buf, len);
 #ifdef USE_FS
     return vfs_read(fd, buf, len);
 #endif
@@ -100,13 +100,12 @@ _ssize_t _read_r(struct _reent *ignore, int fd, void *buf, size_t len)
 // TIME #include <sys/time.h>
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include "hardware/rtc.h"
+#include "interface.h"
 
 time_t now(void)
 {
     datetime_t t;
     rtc_get_datetime(&t);
-
     // TODO need correction
     struct tm ti;
     ti.tm_sec = t.sec;       ///< 0..59
@@ -129,10 +128,9 @@ time_t _time(time_t *tod)
     return (t);
 }
 
-clock_t _times(struct tms *buf)
+clock_t _times(struct tms *tp)
 {
-    uint64_t time_us_64(void);
-    return time_us_64() / 1000;
+    return time_us_64();
 }
 
 int _gettimeofday_r(struct _reent *ignore, struct timeval *tv, void *tz) /* time() */
@@ -149,7 +147,7 @@ int _gettimeofday_r(struct _reent *ignore, struct timeval *tv, void *tz) /* time
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-// Executed before main (crt0.S)
+// Executed before main ( crt0.S )
 void system_init(void)
 {
     // need to link boot2
@@ -162,7 +160,23 @@ void system_init(void)
     stderr->_cookie = 0;
     stdin->_cookie = 0;
 
+    // build_flags = -D PICO_STDIO_UART
+    extern void dbg_uart_init(void);
+    dbg_uart_init();
+
     // build_flags = -D PICO_STDIO_USB
-    bool stdio_usb_init(void);
-    stdio_usb_init();
+    extern void dbg_usb_init(void);
+    dbg_usb_init();
+
+    // TODO SET RTC
+    datetime_t t = {
+        .year = 2021,
+        .month = 1,
+        .day = 1,
+        .dotw = 0,
+        .hour = 0,
+        .min = 0,
+        .sec = 0};
+    rtc_init(); // Start the RTC
+    rtc_set_datetime(&t);
 }

@@ -4,26 +4,22 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifdef PICO_STDIO_USB  
+#ifdef PICO_STDIO_USB
 
 #if !defined(TINYUSB_HOST_LINKED) && !defined(TINYUSB_DEVICE_LINKED)
 #include "tusb.h"
 #include "pico/stdio.h"
 #include "pico/time.h"
 #include "pico/stdio_usb.h"
-#include "pico/stdio/driver.h"
-#include "pico/binary_info.h"
 #include "hardware/irq.h"
 #include "pico/mutex.h"
+#include "debug.h"
 
-static_assert(PICO_STDIO_USB_LOW_PRIORITY_IRQ > RTC_IRQ, ""); // note RTC_IRQ is currently the last one
+static_assert(PICO_STDIO_USB_LOW_PRIORITY_IRQ > RTC_IRQ, "");
 static mutex_t stdio_usb_mutex;
 
 static void low_priority_worker_irq(void)
 {
-    // if the mutex is already owned, then we are in user code
-    // in this file which will do a tud_task itself, so we'll just do nothing
-    // until the next tick; we won't starve
     if (mutex_try_enter(&stdio_usb_mutex, NULL))
     {
         tud_task();
@@ -37,14 +33,14 @@ static int64_t timer_task(__unused alarm_id_t id, __unused void *user_data)
     return PICO_STDIO_USB_TASK_INTERVAL_US;
 }
 
-void stdio_usb_out_chars(const char *buf, int length)
+static int dbg_usb_out_chars(struct _reent *r, _PTR p, const char *buf, int length)
 {
     static uint64_t last_avail_time;
     uint32_t owner;
     if (!mutex_try_enter(&stdio_usb_mutex, &owner))
     {
         if (owner == get_core_num())
-            return; // would deadlock otherwise
+            return -1; // would deadlock otherwise
         mutex_enter_blocking(&stdio_usb_mutex);
     }
     if (tud_cdc_connected())
@@ -77,13 +73,13 @@ void stdio_usb_out_chars(const char *buf, int length)
     }
     else
     {
-        // reset our timeout
-        last_avail_time = 0;
+        last_avail_time = 0; // reset our timeout
     }
     mutex_exit(&stdio_usb_mutex);
+    return length;
 }
 
-int stdio_usb_in_chars(char *buf, int length)
+static int dbg_usb_in_chars(struct _reent *r, _PTR p, char *buf, int length)
 {
     uint32_t owner;
     if (!mutex_try_enter(&stdio_usb_mutex, &owner))
@@ -102,34 +98,29 @@ int stdio_usb_in_chars(char *buf, int length)
     return rc;
 }
 
-bool stdio_usb_init(void)
+void dbg_usb_init(void)
 {
-#if !PICO_NO_BI_STDIO_USB
-    bi_decl_if_func_used(bi_program_feature("USB stdin / stdout"));
-#endif
-
     tusb_init(); // initialize TinyUSB
-
     irq_set_exclusive_handler(PICO_STDIO_USB_LOW_PRIORITY_IRQ, low_priority_worker_irq);
     irq_set_enabled(PICO_STDIO_USB_LOW_PRIORITY_IRQ, true);
-
     mutex_init(&stdio_usb_mutex);
-    bool rc = add_alarm_in_us(PICO_STDIO_USB_TASK_INTERVAL_US, timer_task, NULL, true);
+    int rc = add_alarm_in_us(PICO_STDIO_USB_TASK_INTERVAL_US, timer_task, NULL, true);
     if (rc)
     {
-        extern void dbg_retarget(void *);
-        dbg_retarget((void *)1);
+        stdio_drv.ctx = dbg_usb_init; // not NULL
+        stdio_drv.write_r = dbg_usb_out_chars;
+        stdio_drv.read_r = dbg_usb_in_chars;
+        dbg_retarget(&stdio_drv);
     }
-    return rc;
 }
 
 #else // (TINYUSB_HOST_LINKED) && (TINYUSB_DEVICE_LINKED)
 #include "pico/stdio_usb.h"
 #warning stdio USB was configured, but is being disabled as TinyUSB is explicitly linked
-bool stdio_usb_init(void){ return false; }
+void dbg_usb_init(void) {}
 #endif
 
-#else // PICO_STDIO_USB  
+#else // PICO_STDIO_USB
 #include <stdbool.h>
-bool stdio_usb_init(void) { return 0; }
+void dbg_usb_init(void) {}
 #endif
