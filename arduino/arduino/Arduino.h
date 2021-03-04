@@ -47,13 +47,13 @@ extern "C"
   void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val);
   uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder);
 
-  unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout);     // __attribute__((weak));
-  unsigned long pulseInLong(uint8_t pin, uint8_t state, unsigned long timeout); // __attribute__((weak));
-  void yield(void);                                                             // __attribute__((weak));
-  void interrupts(void);                                                        // __attribute__((weak));
-  void noInterrupts(void);                                                      // __attribute__((weak));
-  void attachInterrupt(uint8_t, void (*)(void), int mode);                      // __attribute__((weak));
-  void detachInterrupt(uint8_t);                                                // __attribute__((weak));
+  unsigned long pulseIn(uint8_t pin, uint8_t state, unsigned long timeout);
+  unsigned long pulseInLong(uint8_t pin, uint8_t state, unsigned long timeout);
+  void yield(void);
+  void interrupts(void);
+  void noInterrupts(void);
+  void attachInterrupt(uint8_t, void (*)(void), int mode);
+  void detachInterrupt(uint8_t);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -70,8 +70,8 @@ long map(long x, long in_min, long in_max, long out_min, long out_max);
 unsigned int makeWord(unsigned int w);
 unsigned int makeWord(unsigned char h, unsigned char l);
 
-void noTone(uint8_t _pin);                                                   // __attribute__((weak));
-void tone(uint8_t _pin, unsigned int frequency, unsigned long duration = 0); // __attribute__((weak));
+void noTone(uint8_t _pin);
+void tone(uint8_t _pin, unsigned int frequency, unsigned long duration = 0);
 
 #endif //__cplusplus
 
