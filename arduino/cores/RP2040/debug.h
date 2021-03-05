@@ -27,6 +27,8 @@ extern "C"
 #include <stdio.h>
 #include <unistd.h>
 
+    #define DBG_UART uart0
+
     typedef struct
     {
         void *ctx;
