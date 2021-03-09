@@ -205,7 +205,7 @@ inline static spin_lock_t *spin_lock_instance(uint lock_num) {
  */
 inline static uint spin_lock_get_num(spin_lock_t *lock) {
     int lock_num = lock - (spin_lock_t *) (SIO_BASE + SIO_SPINLOCK0_OFFSET);
-    invalid_params_if(SYNC, lock_num < 0 || lock_num >= NUM_SPIN_LOCKS);
+    invalid_params_if(SYNC, lock_num < 0 || lock_num >= (int)NUM_SPIN_LOCKS); // WizIO
     return (uint) lock_num;
 }
 
