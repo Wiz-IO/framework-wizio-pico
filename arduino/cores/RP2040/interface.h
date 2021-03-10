@@ -145,10 +145,6 @@ extern "C"
 #endif
     }
 
-    char *utoa(unsigned int value, char *buffer, int radix);
-    static inline char *ltoa(long value, char *result, int base) { return utoa(value, result, base); }
-    static inline char *ultoa(unsigned long value, char *result, int base) { return utoa(value, result, base); }
-
     uint32_t clockCyclesPerMicrosecond(void);
     uint32_t clockCyclesToMicroseconds(uint32_t a);
     uint32_t microsecondsToClockCycles(uint32_t a);
@@ -156,8 +152,16 @@ extern "C"
     void analogInit(uint8_t adc_channel);
     int analogRead(uint8_t adc_channel);
     void analogWrite(uint8_t pin, int val);
-
     float temperatureRead(void);
+
+    //
+
+    char *utoa(unsigned int value, char *buffer, int radix);
+    static inline char *ltoa(long value, char *result, int base) { return utoa(value, result, base); }
+    static inline char *ultoa(unsigned long value, char *result, int base) { return utoa(value, result, base); }
+    unsigned int strhash(char *src);
+
+    //
 
 #ifndef SERIAL_BUFFER_SIZE
 #define SERIAL_BUFFER_SIZE 1024
