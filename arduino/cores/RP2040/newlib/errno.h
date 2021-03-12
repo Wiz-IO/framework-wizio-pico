@@ -13,11 +13,9 @@
 #ifndef __ERRNO_H_
 #define __ERRNO_H_
 
-#include_next "errno.h"
+#include_next <errno.h>
 
-//
 // Possibly define some missing errors
-//
-
+// #warning ERRNO TEST
 
 #endif // __ERRNO_H_
