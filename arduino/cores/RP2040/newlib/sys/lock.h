@@ -10,12 +10,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef __ERRNO_H_
-#define __ERRNO_H_
+#ifndef __MY_LOCK_H__
+#define __MY_LOCK_H__
 
-#include_next <errno.h>
+//#undef _RETARGETABLE_LOCKING
+//#define _RETARGETABLE_LOCKING 0
+#include_next <sys/lock.h>
+//#warning LOCK TEST
 
-// Possibly define some missing errors
-// #warning ERRNO TEST
+#include "pico/mutex.h"
+struct __lock
+{
+    mutex_t pico;
+    int cnt;
+};
 
-#endif // __ERRNO_H_
+typedef struct __lock S_Mutex;
+typedef struct __lock *pS_Mutex;
+
+#endif
