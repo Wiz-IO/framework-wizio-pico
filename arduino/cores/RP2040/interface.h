@@ -67,16 +67,25 @@ extern "C"
 #define MUTEX_LOCK(pM) xSemaphoreTake(MUTEX_PTYPE pM, portMAX_DELAY)
 #define MUTEX_UNLOCK(pM) xSemaphoreGive(MUTEX_PTYPE pM)
 
-#else
+#else // pico-sdk
 
 #define MUTEX_PTYPE (mutex_t *)
-#define MUTEX_INIT(pM)            \
-    pM = malloc(sizeof(mutex_t)); \
+#define MUTEX_INIT(pM)                        \
+    pM = MUTEX_PTYPE malloc(sizeof(mutex_t)); \
     mutex_init(pM)
 #define MUTEX_LOCK(pM) mutex_enter_blocking(MUTEX_PTYPE pM)
 #define MUTEX_UNLOCK(pM) mutex_exit(MUTEX_PTYPE pM)
 
 #endif // USE_FREERTOS
+
+/*** preinit_array function() helper **************
+#pragma GCC push_options
+#pragma GCC optimize("-O0")
+static void pre_lock_init(void){ do some... }
+PRE_INIT_FUNC(pre_lock_init);
+#pragma GCC pop_options
+***************************************************/
+#define PRE_INIT_FUNC(F) static __attribute__((section(".preinit_array"))) void (*__##F)(void) = F
 
 #define INLINE inline __attribute__((always_inline))
 
