@@ -26,8 +26,11 @@ void system_init(void)
     void add_bootloader(void);
     add_bootloader();
 
+    //extern void add_lock(void) __attribute__((weak));
+    //add_lock();
+
     extern void __sinit(struct _reent * s);
-    __sinit(_impure_ptr);
+    __sinit(_impure_ptr); // -> std() -> _retarget_lock_acquire_recursive(&_lock___sinit_recursive_mutex);
     stdout->_cookie = 0;
     stderr->_cookie = 0;
     stdin->_cookie = 0;
