@@ -13,19 +13,28 @@
 #ifndef __MY_LOCK_H__
 #define __MY_LOCK_H__
 
-//#undef _RETARGETABLE_LOCKING
-//#define _RETARGETABLE_LOCKING 0
 #include_next <sys/lock.h>
 //#warning LOCK TEST
 
 #include "pico/mutex.h"
 struct __lock
 {
-    mutex_t pico;
-    int cnt;
+    int owner;
+    int counter;
+    mutex_t pico_mutex;
 };
 
-typedef struct __lock S_Mutex;
-typedef struct __lock *pS_Mutex;
+typedef _LOCK_T _lock_t;
+
+void _lock_init(_lock_t *plock);
+void _lock_init_recursive(_lock_t *plock);
+void _lock_close(_lock_t *plock);
+void _lock_close_recursive(_lock_t *plock);
+void _lock_acquire(_lock_t *plock);
+void _lock_acquire_recursive(_lock_t *plock);
+int _lock_try_acquire(_lock_t *plock);
+int _lock_try_acquire_recursive(_lock_t *plock);
+void _lock_release(_lock_t *plock);
+void _lock_release_recursive(_lock_t *plock);
 
 #endif
