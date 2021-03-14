@@ -70,8 +70,8 @@ extern "C"
 #else // pico-sdk
 
 #define MUTEX_PTYPE (mutex_t *)
-#define MUTEX_INIT(pM)                        \
-    pM = MUTEX_PTYPE malloc(sizeof(mutex_t)); \
+#define MUTEX_INIT(pM)                           \
+    pM = MUTEX_PTYPE calloc(1, sizeof(mutex_t)); \
     mutex_init(pM)
 #define MUTEX_LOCK(pM) mutex_enter_blocking(MUTEX_PTYPE pM)
 #define MUTEX_UNLOCK(pM) mutex_exit(MUTEX_PTYPE pM)
