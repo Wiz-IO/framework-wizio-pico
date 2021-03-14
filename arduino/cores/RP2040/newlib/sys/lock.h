@@ -1,3 +1,7 @@
+////////////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright 2021 Georgi Angelov
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -9,6 +13,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef __MY_LOCK_H__
 #define __MY_LOCK_H__
@@ -16,13 +22,21 @@
 #include_next <sys/lock.h>
 //#warning LOCK TEST
 
+#ifndef USE_FREERTOS
+
 #include "pico/mutex.h"
 struct __lock
 {
-    int owner;
+    mutex_t mx;
     int counter;
-    mutex_t pico_mutex;
 };
+
+#else
+struct __lock
+{
+    SemaphoreHandle_t mx; // Fix?
+};
+#endif
 
 typedef _LOCK_T _lock_t;
 

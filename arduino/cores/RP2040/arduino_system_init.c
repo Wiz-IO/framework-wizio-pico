@@ -26,14 +26,15 @@ void system_init(void)
     void add_bootloader(void);
     add_bootloader();
 
-    //extern void add_lock(void) __attribute__((weak));
-    //add_lock();
-
-    extern void __sinit(struct _reent * s);
-    __sinit(_impure_ptr); // -> std() -> _retarget_lock_acquire_recursive(&_lock___sinit_recursive_mutex);
-    stdout->_cookie = 0;
-    stderr->_cookie = 0;
-    stdin->_cookie = 0;
+#ifdef USE_LOCK
+    extern void add_lock(void);
+    add_lock();
+#endif
+    extern void __sinit(struct _reent *);
+    __sinit(_impure_ptr); 
+    stdout->_cookie = NULL;
+    stderr->_cookie = NULL;
+    stdin->_cookie = NULL;
 
     // build_flags = -D PICO_STDIO_SEMIHOSTING
     void semihosting_init(void);

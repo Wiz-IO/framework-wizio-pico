@@ -27,7 +27,13 @@ extern "C"
 #include <stdio.h>
 #include <unistd.h>
 
-    #define DBG_UART uart0
+#define DBG_UART PICO_DEFAULT_UART_INSTANCE
+    extern char DBG_BUFFER[];
+#define DBG(FRM, ...) /* DBG_UART must be open */                                       \
+    {                                                                                   \
+        sprintf(DBG_BUFFER, FRM, ##__VA_ARGS__);                                        \
+        uart_write_blocking(DBG_UART, (const uint8_t *)DBG_BUFFER, strlen(DBG_BUFFER)); \
+    }
 
     typedef struct
     {
