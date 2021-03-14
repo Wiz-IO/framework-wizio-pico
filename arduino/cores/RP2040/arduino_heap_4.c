@@ -70,7 +70,7 @@
 	heap - probably so it can be placed in a special segment or address. */
 	extern uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 #else
-	static uint8_t ucHeap[ PICO_HEAP_SIZE ];// __attribute__((section(".heap"))); 
+	static uint8_t ucHeap[ OS_HEAP_SIZE ] __attribute__((section(".heap"))); 
 #endif /* configAPPLICATION_ALLOCATED_HEAP */
 
 /* Define the linked list structure.  This is used to link free blocks in order
@@ -346,7 +346,7 @@ static void prvHeapInit( void )
 BlockLink_t *pxFirstFreeBlock;
 uint8_t *pucAlignedHeap;
 size_t uxAddress;
-size_t xTotalHeapSize = PICO_HEAP_SIZE;
+size_t xTotalHeapSize = OS_HEAP_SIZE;
 
 	/* Ensure the heap starts on a correctly aligned boundary. */
 	uxAddress = ( size_t ) ucHeap;
