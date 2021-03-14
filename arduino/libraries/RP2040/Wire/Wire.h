@@ -1,4 +1,6 @@
 /*
+    2021 Georgi Angelov
+
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
@@ -10,8 +12,6 @@
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA   
-
-    Author: Georgi Angelov  
  */
 
 #ifndef __WIRE_H__
@@ -24,49 +24,66 @@
 #include "RingBuffer.h"
 #include "hardware/i2c.h"
 
+#define WIRE_PRINT // Serial.printf
+
 class TwoWire : public Stream
 {
 private:
-    int _sda, _scl;
-    uint32_t _timeOutMillis;
+    int _sda, _scl, _speed;
+    uint32_t _timeout_us;
     bool transmissionBegun;
-    RingBuffer rx, tx;
-    uint8_t SlaveAddress;
+    uint8_t _slave_address;
     i2c_inst_t *ctx;
+    RingBuffer rx, tx;
 
 public:
     TwoWire(i2c_inst_t *contex, uint32_t speed_Hz = 100000)
     {
         ctx = contex;
-        _sda = -1;
-        _scl = -1;
+        _speed = speed_Hz;
+        _timeout_us = 100 * 1000;
+        _sda = PICO_DEFAULT_I2C_SDA_PIN;
+        _scl = PICO_DEFAULT_I2C_SCL_PIN;
         transmissionBegun = false;
     }
 
     ~TwoWire() { end(); }
 
-    void setPins(int sdaPin, int sclPin, bool enablePullup = true)
+    void pins(int SDA, int SCL, bool enablePullup = true)
     {
-        _sda = sdaPin;
-        _scl = sclPin;
-        gpio_set_function(sdaPin, GPIO_FUNC_I2C);
-        gpio_set_function(sclPin, GPIO_FUNC_I2C);
+        _sda = SDA;
+        _scl = SCL;
+        gpio_set_function(SDA, GPIO_FUNC_I2C);
+        gpio_set_function(SCL, GPIO_FUNC_I2C);
         if (enablePullup)
         {
-            gpio_pull_up(sdaPin);
-            gpio_pull_up(sclPin);
+            gpio_pull_up(SDA);
+            gpio_pull_up(SCL);
         }
+        //WIRE_PRINT("[%s] %d, %d\n", __func__, sdaPin, sclPin);
     }
 
-    void setTimeOut(uint32_t timeOutMillis) { _timeOutMillis = timeOutMillis; }
+    void setTimeOut(uint32_t timeout_millis) { _timeout_us = timeout_millis * 1000; }
 
-    void setClock(uint32_t speed_Hz) { i2c_set_baudrate(ctx, speed_Hz * 1000); }
-
-    void begin(int sdaPin, int sclPin, uint32_t speed_Hz)
+    void setClock(uint32_t speed_Hz)
     {
-        setPins(sdaPin, sclPin);
-        i2c_init(ctx, speed_Hz * 1000);
+        i2c_set_baudrate(ctx, speed_Hz);
     }
+
+    void xxxx(int SDA, int SCL, uint32_t speed_Hz)
+    {
+        pins(SDA, SCL);
+        int freq = i2c_init(ctx, speed_Hz);
+    }
+
+    void begin(int SDA, int SCL, uint8_t address)
+    {
+        _slave_address = address;
+        pins(SDA, SCL);
+        i2c_init(ctx, _speed);
+    }
+
+    void begin(void) { begin(_sda, _scl, _slave_address); }
 
     void end()
     {
