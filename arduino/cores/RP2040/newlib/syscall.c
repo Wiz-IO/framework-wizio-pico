@@ -52,51 +52,55 @@ int _isatty(int fd)
 
 _off_t _lseek_r(struct _reent *r, int fd, _off_t where, int whence)
 {
-    int err = -1;
+    int err = -EINVAL;
 #ifdef USE_VFS
     err = vfs_seek(fd, where, whence);
 #endif
-    //__errno_r(r) = EINVAL;
+    //__errno_r(r) = (err < 0) ? -err : 0;
+    errno = (err < 0) ? -err : 0;
     return err;
 }
 
 int _fstat_r(struct _reent *r, int fd, struct stat *st)
 {
-    int err = -1;
+    int err = -EINVAL;
 #ifdef USE_VFS
 // TODO
 #endif
-    //__errno_r(r) = EINVAL;
+    //__errno_r(r) = (err < 0) ? -err : 0;
+    errno = (err < 0) ? -err : 0;
     return err;
 }
 
 int _close_r(struct _reent *r, int fd)
 {
-    int err = -1;
+    int err = -EINVAL;
     if (fd > STDERR_FILENO)
     {
 #ifdef USE_VFS
         err = vfs_close(fd);
 #endif
     }
-    //__errno_r(r) = EINVAL;
+    //__errno_r(r) = (err < 0) ? -err : 0;
+    errno = (err < 0) ? -err : 0;
     return err;
 }
 
 int _open_r(struct _reent *r, const char *path, int flags, int mode)
 {
-    int err = -1;
-    //__errno_r(r) = EINVAL;
+    int err = -EINVAL;
 #ifdef USE_VFS
     if (path)
         err = vfs_open(path, flags, mode);
 #endif
+    //__errno_r(r) = (err < 0) ? -err : 0;
+    errno = (err < 0) ? -err : 0;
     return err;
 }
 
 _ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
 {
-    int err = -1;
+    int err = -EINVAL;
     if (fd > -1 && buf && len)
     {
         if (_isatty(fd))
@@ -111,13 +115,14 @@ _ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
 #endif
         }
     }
-    //__errno_r(r) = EINVAL;
+    //__errno_r(r) = (err < 0) ? -err : 0;
+    errno = (err < 0) ? -err : 0;
     return err;
 }
 
 _ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
 {
-    int err = -1;
+    int err = -EINVAL;
     if (fd > -1 && buf && len)
     {
         if (fd == STDIN_FILENO)
@@ -132,7 +137,8 @@ _ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
 #endif
         }
     }
-    //__errno_r(r) = EINVAL;
+    //__errno_r(r) = (err < 0) ? -err : 0;
+    errno = (err < 0) ? -err : 0;
     return err;
 }
 
