@@ -21,11 +21,13 @@
 #include "hardware/uart.h"
 #include "hardware/irq.h"
 
+char DBG_BUFFER[256];
+
 drv_t stdio_drv;
 
 void dbg_retarget(void *p)
 {
-    //extern void __sinit(struct _reent * s);
+    //extern void __sinit(struct _reent *);
     //__sinit(_impure_ptr);
 
     /* STDOUT */
@@ -65,7 +67,9 @@ static int dbg_uart_read_r(struct _reent *r, _PTR p, char *buf, int len)
 
 void dbg_uart_init(void)
 {
-    irq_set_enabled(UART0_IRQ, false);
+    //if (DBG_UART == uart0) irq_set_enabled(UART0_IRQ, false);
+    //else irq_set_enabled(UART1_IRQ, false);
+
     uart_deinit(DBG_UART);
     gpio_set_function(PICO_DEFAULT_UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(PICO_DEFAULT_UART_RX_PIN, GPIO_FUNC_UART);
