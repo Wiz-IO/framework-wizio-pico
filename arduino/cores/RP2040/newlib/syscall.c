@@ -47,56 +47,57 @@ int _getpid(void) { return -1; }
 
 int _isatty(int fd)
 {
-    return ((fd == STDOUT_FILENO) || (fd == STDERR_FILENO) || (fd == STDIN_FILENO));
+    return (unsigned int)fd < STDERR_FILENO + 1;
 }
 
 _off_t _lseek_r(struct _reent *r, int fd, _off_t where, int whence)
 {
-    int err;
+    int err = -1;
 #ifdef USE_VFS
     err = vfs_seek(fd, where, whence);
 #endif
-    __errno_r(r) = EINVAL;
-    return -1;
+    //__errno_r(r) = EINVAL;
+    return err;
 }
 
 int _fstat_r(struct _reent *r, int fd, struct stat *st)
 {
-    int err;
+    int err = -1;
 #ifdef USE_VFS
 // TODO
 #endif
-    __errno_r(r) = EINVAL;
-    return -1;
+    //__errno_r(r) = EINVAL;
+    return err;
 }
 
 int _close_r(struct _reent *r, int fd)
 {
-    int err;
+    int err = -1;
     if (fd > STDERR_FILENO)
     {
 #ifdef USE_VFS
         err = vfs_close(fd);
 #endif
     }
-    __errno_r(r) = EINVAL;
-    return -1;
+    //__errno_r(r) = EINVAL;
+    return err;
 }
 
 int _open_r(struct _reent *r, const char *path, int flags, int mode)
 {
-    int err;
+    int err = -1;
+    //__errno_r(r) = EINVAL;
 #ifdef USE_VFS
-    err = vfs_open(path, flags, mode);
+    if (path)
+        err = vfs_open(path, flags, mode);
 #endif
-    __errno_r(r) = EINVAL;
-    return -1;
+    return err;
 }
 
 _ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
 {
-    int err;
-    if (fd >= STDIN_FILENO && buf && len)
+    int err = -1;
+    if (fd > -1 && buf && len)
     {
         if (_isatty(fd))
         {
@@ -110,14 +111,14 @@ _ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
 #endif
         }
     }
-    __errno_r(r) = EINVAL;
-    return -1;
+    //__errno_r(r) = EINVAL;
+    return err;
 }
 
 _ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
 {
-    int err;
-    if (fd >= STDIN_FILENO && buf && len)
+    int err = -1;
+    if (fd > -1 && buf && len)
     {
         if (fd == STDIN_FILENO)
         {
@@ -131,8 +132,8 @@ _ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
 #endif
         }
     }
-    __errno_r(r) = EINVAL;
-    return -1;
+    //__errno_r(r) = EINVAL;
+    return err;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -145,7 +146,7 @@ int rename(const char *src_path, const char *dst_path)
 #ifdef USE_VFS
     //return vfs_rename(src_path, dst_path);
 #endif
-    errno = EINVAL;
+    //errno = EINVAL;
     return -1;
 }
 
@@ -155,7 +156,7 @@ int truncate(const char *path, off_t length)
 #ifdef USE_VFS
     //vfs_truncate(path, length);
 #endif
-    errno = EINVAL;
+    //errno = EINVAL;
     return -1;
 }
 
@@ -165,7 +166,7 @@ int rmdir(const char *path)
 #ifdef USE_VFS
     //return vfs_rmdir(path);
 #endif
-    errno = EINVAL;
+    //errno = EINVAL;
     return -1;
 }
 
@@ -175,7 +176,7 @@ int mkdir(const char *path, mode_t mode)
 #ifdef USE_VFS
     //return vfs_mkdir(path, mode);
 #endif
-    errno = EINVAL;
+    //errno = EINVAL;
     return -1;
 }
 
