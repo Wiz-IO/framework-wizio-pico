@@ -10,6 +10,7 @@
 #include "pico/time.h"
 #include "pico/stdio/driver.h"
 #include "pico/binary_info.h"
+#include "pico/mutex.h" //WizIO
 #include "hardware/irq.h"
 
 static_assert(PICO_STDIO_USB_LOW_PRIORITY_IRQ > RTC_IRQ, ""); // note RTC_IRQ is currently the last one
