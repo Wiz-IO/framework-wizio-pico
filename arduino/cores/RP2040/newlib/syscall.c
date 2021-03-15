@@ -148,42 +148,42 @@ _ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
 
 int rename(const char *src_path, const char *dst_path)
 {
-    int err;
+    int err = -EINVAL;
 #ifdef USE_VFS
     //return vfs_rename(src_path, dst_path);
 #endif
     //errno = EINVAL;
-    return -1;
+    return err;
 }
 
 int truncate(const char *path, off_t length)
 {
-    int err;
+    int err = -EINVAL;
 #ifdef USE_VFS
     //vfs_truncate(path, length);
 #endif
     //errno = EINVAL;
-    return -1;
+    return err;
 }
 
 int rmdir(const char *path)
 {
-    int err;
+    int err = -EINVAL;
 #ifdef USE_VFS
     //return vfs_rmdir(path);
 #endif
     //errno = EINVAL;
-    return -1;
+    return err;
 }
 
 int mkdir(const char *path, mode_t mode)
 {
-    int err;
+    int err = -EINVAL;
 #ifdef USE_VFS
     //return vfs_mkdir(path, mode);
 #endif
     //errno = EINVAL;
-    return -1;
+    return err;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
