@@ -27,9 +27,9 @@ class HardwareSerial : public Stream
 public:
   HardwareSerial(){};
   virtual ~HardwareSerial(){};
-  virtual void begin(unsigned long){};
-  virtual void begin(unsigned long baudrate, uint16_t config){};
-  virtual void end(){};
+  virtual void begin(unsigned long, bool retarget);
+  virtual void begin(unsigned long baudrate, uint8_t config, bool retarget);
+  virtual void end();
   virtual int available() = 0;
   virtual int peek() = 0;
   virtual int read() = 0;
