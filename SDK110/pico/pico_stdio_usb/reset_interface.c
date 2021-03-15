@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 #include "tusb.h"
-#include "hardware/regs/addressmap.h" //WizIO edit
 #include "pico/bootrom.h"
 
 #if PICO_STDIO_USB_ENABLE_RESET_VIA_VENDOR_INTERFACE && !(PICO_STDIO_USB_RESET_INTERFACE_SUPPORT_RESET_TO_BOOTSEL || PICO_STDIO_USB_RESET_INTERFACE_SUPPORT_RESET_TO_FLASH_BOOT)
@@ -60,7 +59,7 @@ static bool resetd_control_request_cb(uint8_t __unused rhport, tusb_control_requ
 
 #if PICO_STDIO_USB_RESET_INTERFACE_SUPPORT_RESET_TO_FLASH_BOOT
         if (request->bRequest == RESET_REQUEST_FLASH) {
-            watchdog_reboot(0, SRAM_END, PICO_STDIO_USB_RESET_RESET_TO_FLASH_DELAY_MS);
+            watchdog_reboot(0, 0/*SRAM_END*/, PICO_STDIO_USB_RESET_RESET_TO_FLASH_DELAY_MS); // kilograham added this to the 1.1.1 milestone
             return true;
         }
 #endif
