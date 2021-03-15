@@ -25,6 +25,8 @@
 #include <task.h>
 #endif
 
+long timezone = 0;
+
 time_t now(void)
 {
     datetime_t t;
