@@ -62,7 +62,8 @@ extern "C"
 #include <FreeRTOS.h>
 #include <task.h>
 #include <semphr.h>
-#define MUTEX_PTYPE (xSemaphoreHandle)
+#include <timers.h>
+#define MUTEX_PTYPE (SemaphoreHandle_t)
 #define MUTEX_INIT(pM) pM = xSemaphoreCreateMutex()
 #define MUTEX_LOCK(pM) xSemaphoreTake(MUTEX_PTYPE pM, portMAX_DELAY)
 #define MUTEX_UNLOCK(pM) xSemaphoreGive(MUTEX_PTYPE pM)

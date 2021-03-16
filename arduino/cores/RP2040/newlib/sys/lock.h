@@ -32,9 +32,10 @@ struct __lock
 };
 
 #else
+//#include <interface.h>
 struct __lock
 {
-    SemaphoreHandle_t mx; // Fix?
+    int mx; 
 };
 #endif
 

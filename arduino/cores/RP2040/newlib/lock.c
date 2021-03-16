@@ -56,7 +56,7 @@ void _lock_init(_lock_t *lock)
     *lock = (_lock_t)calloc(1, sizeof(struct __lock));
     mutex_init(&(*lock)->mx);
 #else
-    *lock = xSemaphoreCreateMutex();
+    *lock = (_lock_t)xSemaphoreCreateMutex();
 #endif
     EXIT_CRITICAL();
 }
@@ -68,7 +68,7 @@ void _lock_init_recursive(_lock_t *lock)
     *lock = (_lock_t)calloc(1, sizeof(struct __lock));
     mutex_init(&(*lock)->mx);
 #else
-    *lock = xSemaphoreCreateRecursiveMutex();
+    *lock = (_lock_t)xSemaphoreCreateRecursiveMutex();
 #endif
     EXIT_CRITICAL();
 }
@@ -78,8 +78,10 @@ void _lock_close(_lock_t *lock)
     ENTER_CRITICAL();
 #ifndef USE_FREERTOS
     free(*lock);
+    *lock = 0;
 #else
-    vSemaphoreDelete(lock);
+    vSemaphoreDelete((SemaphoreHandle_t)*lock);
+    *lock = 0;
 #endif
     EXIT_CRITICAL();
 }
@@ -88,8 +90,10 @@ void _lock_close_recursive(_lock_t *lock)
 {
 #ifndef USE_FREERTOS
     free(*lock);
+    *lock = 0;
 #else
-    vSemaphoreDelete(lock);
+    vSemaphoreDelete((SemaphoreHandle_t)*lock);
+    *lock = 0;
 #endif
 }
 
@@ -98,7 +102,7 @@ void _lock_acquire(_lock_t *lock)
 #ifndef USE_FREERTOS
     mutex_enter_blocking(&(*lock)->mx);
 #else
-    xSemaphoreTake(lock, portMAX_DELAY);
+    xSemaphoreTake((SemaphoreHandle_t)*lock, portMAX_DELAY);
 #endif
 }
 
@@ -115,7 +119,7 @@ void _lock_acquire_recursive(_lock_t *lock)
         mutex_enter_blocking(&(*lock)->mx);
     }
 #else
-    xSemaphoreTakeRecursive(lock, portMAX_DELAY);
+    xSemaphoreTakeRecursive((SemaphoreHandle_t)*lock, portMAX_DELAY);
 #endif
 }
 
@@ -124,7 +128,7 @@ int _lock_try_acquire(_lock_t *lock)
 #ifndef USE_FREERTOS
     return mutex_try_enter(&(*lock)->mx, NULL); // true = unowned, Fix?
 #else
-    return xSemaphoreTake(lock, 0);
+    return xSemaphoreTake((SemaphoreHandle_t)*lock, 0);
 #endif
 }
 
@@ -138,7 +142,7 @@ int _lock_try_acquire_recursive(_lock_t *lock)
     }
     return mutex_try_enter(&(*lock)->mx, NULL); // true = unowned, Fix
 #else
-    return xSemaphoreTakeRecursive(lock, 0);
+    return xSemaphoreTakeRecursive((SemaphoreHandle_t)*lock, 0);
 #endif
 }
 
@@ -147,7 +151,7 @@ void _lock_release(_lock_t *lock)
 #ifndef USE_FREERTOS
     mutex_exit(&(*lock)->mx);
 #else
-    xSemaphoreGive(lock);
+    xSemaphoreGive((SemaphoreHandle_t)*lock);
 #endif
 }
 
@@ -164,7 +168,7 @@ void _lock_release_recursive(_lock_t *lock)
         mutex_exit(&(*lock)->mx);
     }
 #else
-    xSemaphoreGiveRecursive(lock);
+    xSemaphoreGiveRecursive((SemaphoreHandle_t)*lock);
 #endif
 }
 
@@ -193,6 +197,8 @@ void __retarget_lock_release_recursive(_LOCK_T lock) { _lock_release_recursive(&
 #pragma GCC optimize("-O0")
 static void pre_lock_init(void)
 {
+#ifndef USE_FREERTOS
+
 #if LOCK_SIMPLE > 0
     mutex_init(&s_common_mutex.mx);
     mutex_init(&s_common_recursive_mutex.mx);
@@ -200,12 +206,33 @@ static void pre_lock_init(void)
     mutex_init(&__lock___sinit_recursive_mutex.mx);
     mutex_init(&__lock___sfp_recursive_mutex.mx);
     mutex_init(&__lock___atexit_recursive_mutex.mx);
-    mutex_init(&__lock___at_quick_exit_mutex.mx);
     mutex_init(&__lock___malloc_recursive_mutex.mx);
     mutex_init(&__lock___env_recursive_mutex.mx);
+
+    mutex_init(&__lock___at_quick_exit_mutex.mx);    
     mutex_init(&__lock___tz_mutex.mx);
     mutex_init(&__lock___dd_hash_mutex.mx);
     mutex_init(&__lock___arc4random_mutex.mx);
+#endif
+
+#else
+
+#if LOCK_SIMPLE > 0 
+    xSemaphoreCreateMutexStatic((struct xSTATIC_QUEUE *)&s_common_mutex);
+    xSemaphoreCreateRecursiveMutexStatic((struct xSTATIC_QUEUE *)&s_common_recursive_mutex);
+#else
+    xSemaphoreCreateRecursiveMutexStatic((struct xSTATIC_QUEUE *)&__lock___sinit_recursive_mutex);
+    xSemaphoreCreateRecursiveMutexStatic((struct xSTATIC_QUEUE *)&__lock___sfp_recursive_mutex);
+    xSemaphoreCreateRecursiveMutexStatic((struct xSTATIC_QUEUE *)&__lock___atexit_recursive_mutex);
+    xSemaphoreCreateRecursiveMutexStatic((struct xSTATIC_QUEUE *)&__lock___malloc_recursive_mutex);
+    xSemaphoreCreateRecursiveMutexStatic((struct xSTATIC_QUEUE *)&__lock___env_recursive_mutex);
+
+    xSemaphoreCreateMutexStatic((struct xSTATIC_QUEUE *)&__lock___at_quick_exit_mutex.mx);    
+    xSemaphoreCreateMutexStatic((struct xSTATIC_QUEUE *)&__lock___tz_mutex.mx);
+    xSemaphoreCreateMutexStatic((struct xSTATIC_QUEUE *)&__lock___dd_hash_mutex.mx);
+    xSemaphoreCreateMutexStatic((struct xSTATIC_QUEUE *)&__lock___arc4random_mutex.mx);
+#endif
+
 #endif
 }
 PRE_INIT_FUNC(pre_lock_init);
