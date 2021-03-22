@@ -56,6 +56,7 @@ extern "C"
 #include "hardware/divider.h"
 #include "hardware/clocks.h"
 #include "hardware/sync.h"
+#include "hardware/irq.h"
 #include "hardware/structs/systick.h"
 
 #define PRE_INIT_FUNC(F) static __attribute__((section(".preinit_array"))) void (*__##F)(void) = F
