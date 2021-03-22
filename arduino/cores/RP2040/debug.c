@@ -16,13 +16,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include "hardware/uart.h"
-#include "hardware/gpio.h"
-#include "hardware/irq.h"
+#include "wizio.h"
 #include "debug.h"
 
 drv_t stdio_drv;
