@@ -50,35 +50,58 @@ enum BitOrder {
 typedef bool boolean;
 typedef uint8_t byte;
 typedef uint16_t word;
+typedef uint8_t pin_size_t;
 
-#define PI				            3.1415926535897932384626433832795
-#define HALF_PI				        1.5707963267948966192313216916398
-#define TWO_PI				        6.283185307179586476925286766559
-#define DEG_TO_RAD			      0.017453292519943295769236907684886
-#define RAD_TO_DEG			      57.295779513082320876798154814105
-#define EULER				          2.718281828459045235360287471352
+#define PI				                  3.1415926535897932384626433832795
+#define HALF_PI				              1.5707963267948966192313216916398
+#define TWO_PI				              6.283185307179586476925286766559
+#define DEG_TO_RAD			            0.017453292519943295769236907684886
+#define RAD_TO_DEG			            57.295779513082320876798154814105
+#define EULER				                2.718281828459045235360287471352
 
+//#define min(a,b)			            ((a)<(b)?(a):(b))
+//#define max(a,b)			            ((a)>(b)?(a):(b))
+//#include <minmax.h>
+
+#ifndef radians
+#define radians(deg)              ((deg)*DEG_TO_RAD)
+#endif
+
+#ifndef degrees
+#define degrees(rad)              ((rad)*RAD_TO_DEG)
+#endif
+
+#ifndef sq
+#define sq(x) ((x)*(x))
+#endif
 
 #ifdef abs
 #undef abs
 #endif
 #define abs(x)                    ((x)>0?(x):-(x))
 
-#define min(a,b)			            ((a)<(b)?(a):(b))
-#define max(a,b)			            ((a)>(b)?(a):(b))
-
 #define constrain(amt,low,high)		((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 
-//#define round(x)			            ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
+#ifdef round
+#define round(x)			            ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
+#endif
+
 #define radians(deg)			        ((deg)*DEG_TO_RAD)
 #define degrees(rad)			        ((rad)*RAD_TO_DEG)
 #define sq(x)                     ((x)*(x))
 
-
 #define lowByte(w)			          ((uint8_t) ((w) & 0xff))
 #define highByte(w)			          ((uint8_t) ((w) >> 8))
 
-#define bit(b)				            (1UL << (b))
+#define bitRead(value, bit)       (((value) >> (bit)) & 0x01)
+#define bitSet(value, bit)        ((value) |= (1UL << (bit)))
+#define bitClear(value, bit)      ((value) &= ~(1UL << (bit)))
+#define bitToggle(value, bit)     ((value) ^= (1UL << (bit)))
+#define bitWrite(value, bit, bitvalue) (bitvalue ? bitSet(value, bit) : bitClear(value, bit))
+
+#ifndef bit
+#define bit(b)                    (1UL << (b))
+#endif
 
 #define bitRead(value, bit)		    (((value) >> (bit)) & 0x01)
 #define bitSet(value, bit)		    ((value) |= (1UL << (bit)))
@@ -92,5 +115,7 @@ typedef uint16_t word;
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus
+
+/* C++ prototypes */
 
 #endif /* _WIRING_CONSTANTS_ */

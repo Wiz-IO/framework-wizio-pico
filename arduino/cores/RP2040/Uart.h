@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright 2021 Georgi Angelov
+//      2021 Georgi Angelov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,31 +27,6 @@
 #include "hardware/irq.h"
 #include "debug.h"
 
-#define SERIAL_5N1 (8 << 4) | (UART_PARITY_NONE << 2) | 1
-#define SERIAL_6N1 (8 << 4) | (UART_PARITY_NONE << 2) | 1
-#define SERIAL_7N1 (8 << 4) | (UART_PARITY_NONE << 2) | 1
-#define SERIAL_8N1 (8 << 4) | (UART_PARITY_NONE << 2) | 1
-#define SERIAL_5N2 (8 << 4) | (UART_PARITY_NONE << 2) | 2
-#define SERIAL_6N2 (8 << 4) | (UART_PARITY_NONE << 2) | 2
-#define SERIAL_7N2 (8 << 4) | (UART_PARITY_NONE << 2) | 2
-#define SERIAL_8N2 (8 << 4) | (UART_PARITY_NONE << 2) | 2
-#define SERIAL_5E1 (8 << 4) | (UART_PARITY_EVEN << 2) | 1
-#define SERIAL_6E1 (8 << 4) | (UART_PARITY_EVEN << 2) | 1
-#define SERIAL_7E1 (8 << 4) | (UART_PARITY_EVEN << 2) | 1
-#define SERIAL_8E1 (8 << 4) | (UART_PARITY_EVEN << 2) | 1
-#define SERIAL_5E2 (8 << 4) | (UART_PARITY_EVEN << 2) | 2
-#define SERIAL_6E2 (8 << 4) | (UART_PARITY_EVEN << 2) | 2
-#define SERIAL_7E2 (8 << 4) | (UART_PARITY_EVEN << 2) | 2
-#define SERIAL_8E2 (8 << 4) | (UART_PARITY_EVEN << 2) | 2
-#define SERIAL_5O1 (8 << 4) | (UART_PARITY_ODD << 2) | 1
-#define SERIAL_6O1 (8 << 4) | (UART_PARITY_ODD << 2) | 1
-#define SERIAL_7O1 (8 << 4) | (UART_PARITY_ODD << 2) | 1
-#define SERIAL_8O1 (8 << 4) | (UART_PARITY_ODD << 2) | 1
-#define SERIAL_5O2 (8 << 4) | (UART_PARITY_ODD << 2) | 2
-#define SERIAL_6O2 (8 << 4) | (UART_PARITY_ODD << 2) | 2
-#define SERIAL_7O2 (8 << 4) | (UART_PARITY_ODD << 2) | 2
-#define SERIAL_8O2 (8 << 4) | (UART_PARITY_ODD << 2) | 2
-
 typedef struct tag_UART_CONTEXT
 {
     void *cUart;
@@ -68,7 +43,7 @@ class Uart : public HardwareSerial
 private:
     uart_inst_t *u;
     pUART_CONTEXT ctx;
-    RingBuffer rx_ring; // SERIAL_BUFFER_SIZE = 1024
+    RingBuffer rx_ring; // SERIAL_BUFFER_SIZE = 256
     uint32_t _brg;
     int UART_IRQ;
     int TX_PIN, RX_PIN;
@@ -93,8 +68,8 @@ public:
             ctx = &UARTINFO[1];
             memset(ctx, 0, sizeof(UART_CONTEXT));
             ctx->rx_handler = u1_rx_handler;
-            TX_PIN = 4; 
-            RX_PIN = 5; 
+            TX_PIN = 4;
+            RX_PIN = 5;
         }
         ctx->cUart = this;
     }
@@ -141,7 +116,7 @@ public:
 
     void begin(unsigned long baud, uint8_t config, bool retarget = false)
     {
-        begin(baud, config >> 4, config & 3, (config & 0xF) >> 2, retarget);
+        begin(baud, config >> 8 & 0xF /*data*/, config & 4 /*stop*/ & 0xF, config & 0xF /*parity*/, retarget);
     }
 
     void end(void)
@@ -165,9 +140,9 @@ public:
     {
         if (!rx_ring.available())
             return -1;
-        __disable_irq();
+        ENTER_CRITICAL();
         uint8_t byte = rx_ring.read_char();
-        __enable_irq();
+        EXIT_CRITICAL();
         return byte;
     }
     int read(uint8_t *buf, size_t size)
@@ -194,19 +169,18 @@ public:
     // PRIVATE HANDLER
     void isr_save()
     {
-        __disable_irq();
         while (uart_is_readable(u))
         {
             if (rx_ring.availableForStore())
             {
                 char c = uart_getc(u);
-                //DI(c);
+                ENTER_CRITICAL();
                 rx_ring.store_char(c);
+                EXIT_CRITICAL();
             }
             else
                 break;
         }
-        __enable_irq();
     }
 
     // STDIO

@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright 2021 Georgi Angelov
+//      2021 Georgi Angelov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef USE_FREERTOS
+#if defined(ARDUINO) || defined(USE_FREERTOS)
 #include <string.h>
 
 extern void *pvPortMalloc(size_t xWantedSize);
@@ -55,4 +55,4 @@ void *calloc(size_t element, size_t size)
 }
 void *_calloc_r(struct _reent *ignored, size_t element, size_t size) { return calloc(element, size); }
 
-#endif // USE_FREERTOS
+#endif 

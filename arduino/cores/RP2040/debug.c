@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright 2021 Georgi Angelov ver 1.0
+//      2021 Georgi Angelov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,31 +16,30 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include "debug.h"
-#include "hardware/gpio.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include "hardware/uart.h"
+#include "hardware/gpio.h"
 #include "hardware/irq.h"
-
-char DBG_BUFFER[256];
+#include "debug.h"
 
 drv_t stdio_drv;
 
 void dbg_retarget(void *p)
 {
-    //extern void __sinit(struct _reent *);
-    //__sinit(_impure_ptr);
-
     /* STDOUT */
     stdout->_cookie = p;
     stdout->_write = ((drv_t *)p)->write_r;
     stdout->_flags = __SWID | __SWR | __SNBF;
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    /* STDERR NOT USED */
-    //stderr->_cookie = p;
-    //stderr->_write = dbg_write_r;
-    //stderr->_flags = __SWID | __SWR | __SNBF;
-    //setvbuf(stderr, NULL, _IONBF, 0);
+    /* STDERR */
+    stderr->_cookie = p;
+    stderr->_write = ((drv_t *)p)->write_r;
+    stderr->_flags = __SWID | __SWR | __SNBF;
+    setvbuf(stderr, NULL, _IONBF, 0);
 
     /* STDIN */
     stdin->_cookie = p;
@@ -67,9 +66,6 @@ static int dbg_uart_read_r(struct _reent *r, _PTR p, char *buf, int len)
 
 void dbg_uart_init(void)
 {
-    //if (DBG_UART == uart0) irq_set_enabled(UART0_IRQ, false);
-    //else irq_set_enabled(UART1_IRQ, false);
-
     uart_deinit(DBG_UART);
     gpio_set_function(PICO_DEFAULT_UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(PICO_DEFAULT_UART_RX_PIN, GPIO_FUNC_UART);
@@ -83,9 +79,7 @@ void dbg_uart_init(void)
     dbg_retarget(&stdio_drv);
 }
 #else
-void dbg_uart_init(void)
-{
-}
+void dbg_uart_init(void){}
 #endif // PICO_STDIO_UART
 
 #ifdef PICO_STDIO_SEMIHOSTING
@@ -112,7 +106,5 @@ void semihosting_init(void)
     dbg_retarget(&stdio_drv);
 }
 #else
-void semihosting_init(void)
-{
-}
+void semihosting_init(void){}
 #endif // PICO_STDIO_SEMIHOSTING
