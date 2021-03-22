@@ -95,7 +95,6 @@
 #define xPortPendSVHandler isr_pendsv
 #define xPortSysTickHandler isr_systick
 
-
-/* A header file that defines trace macro can be included here. */
+#define configUSE_APPLICATION_TASK_TAG          1 /* used from pthread */
 
 #endif /* FREERTOS_CONFIG_H */
