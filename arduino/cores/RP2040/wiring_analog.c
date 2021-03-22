@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright 2020 Georgi Angelov ver 2.0
+//      2021 Georgi Angelov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ void analogInit(uint8_t adc_channel)
         adc_gpio_init(adc_channel); // Make sure GPIO is high-impedance, no pullups etc
 }
 
-INLINE int analogRead(uint8_t adc_channel)
+int analogRead(uint8_t adc_channel)
 {
     adc_select_input(adc_channel); // Select ADC_0 (GPIO26), ADC_T is TEMPERATURE
     return adc_read();
@@ -49,5 +49,5 @@ float temperatureRead(void)
 
 void analogWrite(uint8_t channel, int val)
 {
-    // PWM
+    // use PWM
 }

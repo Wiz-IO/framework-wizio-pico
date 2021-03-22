@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright 2020 Georgi Angelov ver 1.0
+//      2021 Georgi Angelov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,18 +23,6 @@ extern "C"
 {
 #endif
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <unistd.h>
-
-#define DBG_UART PICO_DEFAULT_UART_INSTANCE
-    extern char DBG_BUFFER[];
-#define DBG(FRM, ...) /* DBG_UART must be open */                                       \
-    {                                                                                   \
-        sprintf(DBG_BUFFER, FRM, ##__VA_ARGS__);                                        \
-        uart_write_blocking(DBG_UART, (const uint8_t *)DBG_BUFFER, strlen(DBG_BUFFER)); \
-    }
-
     typedef struct
     {
         void *ctx;
@@ -49,4 +37,4 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif //_DBG_H_

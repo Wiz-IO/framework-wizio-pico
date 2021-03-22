@@ -24,6 +24,7 @@
 
 #include <interface.h>
 #include <variant.h>
+#include "minmax.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -44,6 +45,10 @@ extern "C"
   void digitalWrite(uint8_t, uint8_t);
   int digitalRead(uint8_t);
 
+  void analogInit(uint8_t);
+  int analogRead(uint8_t);
+  void analogWrite(uint8_t, int);
+
   void shiftOut(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val);
   uint8_t shiftIn(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder);
 
@@ -63,6 +68,7 @@ extern "C"
 #include "WCharacter.h"
 #include "WString.h"
 
+/* WMath */
 long random(long);
 long random(long howsmall, long howbig);
 void randomSeed(unsigned long seed);

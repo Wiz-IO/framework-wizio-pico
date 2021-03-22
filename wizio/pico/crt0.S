@@ -328,7 +328,9 @@ __get_current_exception:
     .equ StackSize, PICO_STACK_SIZE
 .space StackSize
 
+#ifndef ARDUINO
 .section .heap
 .align 2
     .equ HeapSize, PICO_HEAP_SIZE
 .space HeapSize
+#endif

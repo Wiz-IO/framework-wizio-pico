@@ -3,5 +3,5 @@
     "description": "Framework for Raspberry Pi Pico 2021 Georgi Angelov",
     "url": "https://github.com/Wiz-IO/framework-wizio-pico",
     "system": "*",
-    "version": "1.0.2"
+    "version": "1.0.3"
 }
