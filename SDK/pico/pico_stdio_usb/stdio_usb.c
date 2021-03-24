@@ -112,3 +112,6 @@ bool stdio_usb_init(void) {
     return false;
 }
 #endif
+
+/* WizIO: wait terminal */
+inline bool stdio_usb_connected(void) { return tud_cdc_connected(); } 

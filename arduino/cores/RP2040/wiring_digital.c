@@ -18,6 +18,11 @@
 
 #include <Arduino.h>
 
+inline bool pinGetDir(uint8_t pin)
+{
+    return gpio_get_dir(pin);
+}
+
 void pinMode(uint8_t pin, uint8_t mode)
 {
     if (pin >= PINS_COUNT)

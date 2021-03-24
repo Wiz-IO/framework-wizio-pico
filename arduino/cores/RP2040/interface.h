@@ -72,6 +72,7 @@ extern "C"
     static inline char *ultoa(unsigned long value, char *result, int base) { return utoa(value, result, base); }
     unsigned int strhash(char *src);
 
+    bool pinGetDir(uint8_t pin);
 #define digitalPinToPort(p)
 #define digitalPinToBitMask(p)
 #define digitalPinToClkid(p)

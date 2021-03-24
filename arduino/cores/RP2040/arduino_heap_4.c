@@ -42,6 +42,9 @@
 // BAREMETAL ADAPTATION ARM
 //////////////////////////////////////////////////////////////////////////////////////
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+
 #define portBYTE_ALIGNMENT (8)
 #define portBYTE_ALIGNMENT_MASK (0x0007)
 #define mtCOVERAGE_TEST_MARKER()
@@ -461,4 +464,5 @@ static void prvInsertBlockIntoFreeList(BlockLink_t *pxBlockToInsert)
 }
 /*-----------------------------------------------------------*/
 
+#pragma GCC diagnostic pop
 #endif // USE_FREERTOS

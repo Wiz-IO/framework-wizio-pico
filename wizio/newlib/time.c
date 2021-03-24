@@ -14,11 +14,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+//  TODO TODO TODO
+//
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <time.h>
 #include <errno.h>
 #include <sys/times.h> // struct tms
+#include <time.h>
+
 #include "hardware/rtc.h"
 #include "pico/stdlib.h"
 
@@ -43,21 +46,6 @@ time_t now(void)
     ti.tm_wday = t.dotw;        /// pico < 0..6, 0 is Sunday
     return mktime(&ti);
 }
-
-/*
-time_t _Time(time_t *timer) 
-{
-    return now(); // HOST_SERVICE (SVC_TIME);
-}
-
-time_t _time(time_t *tod)
-{
-    time_t t = _Time(NULL);
-    if (tod)
-        *tod = t;
-    return (t);
-}
-*/
 
 int _gettimeofday_r(struct _reent *ignore, struct timeval *tv, void *tz) /* time() */
 {
@@ -94,6 +82,34 @@ clock_t _times_r(struct _reent *r, struct tms *ptms) /* clock() */
     struct timeval tv = {0, 0};
     _gettimeofday_r(r, &tv, NULL);
     return (clock_t)tv.tv_sec;
+}
+
+int clock_gettime(clockid_t clock_id, struct timespec *tp)
+{
+    if (tp == NULL)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+    struct timeval tv;
+    uint64_t monotonic_time_us = 0;
+    switch (clock_id)
+    {
+    case CLOCK_REALTIME:
+        _gettimeofday_r(NULL, &tv, NULL);
+        tp->tv_sec = tv.tv_sec;
+        tp->tv_nsec = tv.tv_usec * 1000L;
+        break;
+    case 4: //CLOCK_MONOTONIC:
+        monotonic_time_us = to_us_since_boot(get_absolute_time());
+        tp->tv_sec = monotonic_time_us / 1000000LL;
+        tp->tv_nsec = (monotonic_time_us % 1000000LL) * 1000L;
+        break;
+    default:
+        errno = EINVAL;
+        return -1;
+    }
+    return 0;
 }
 
 int usleep(uint64_t us) //useconds_t

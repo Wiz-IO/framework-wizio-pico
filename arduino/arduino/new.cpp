@@ -18,6 +18,9 @@
 
 #include <interface.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsized-deallocation"
+
 void *operator new(size_t size)
 {
   return malloc(size);
@@ -28,12 +31,14 @@ void *operator new[](size_t size)
   return malloc(size);
 }
 
-void operator delete(void *ptr)
+void operator delete(void *ptr) noexcept
 {
   free(ptr);
 }
 
-void operator delete[](void *ptr)
+void operator delete[](void *ptr) noexcept
 {
   free(ptr);
 }
+
+#pragma GCC diagnostic pop

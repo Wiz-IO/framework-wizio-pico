@@ -31,6 +31,8 @@ size_t vfs_write(int fd, const char *buf, size_t size);
 size_t vfs_read(int fd, char *buf, size_t size);
 _off_t vfs_seek(int fd, _off_t where, int whence);
 
+char* __dso_handle; //void* __dso_handle __attribute__ ((__weak__));
+
 // abort() //////////////////////////////////////////////////////////////////////////////
 
 void _kill(int pid, int sig) { return; }
@@ -103,7 +105,7 @@ _ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
                 return stdout->_write(r, stdout->_cookie, buf, len);
 #else // pico-sdk
             extern int _write(int, char *, int);
-            return _write(fd, buf, len);
+            return _write(fd, (char *)buf, len);
 #endif
         }
         else

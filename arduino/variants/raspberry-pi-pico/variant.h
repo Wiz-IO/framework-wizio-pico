@@ -46,7 +46,7 @@ extern "C"
 
 /* CPP ware */
 
-#include <Uart.h>
+#include <SerialUart.h>
 extern Uart Serial;
 extern Uart Serial1;
 
