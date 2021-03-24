@@ -1,0 +1,56 @@
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//      2021 Georgi Angelov
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+////////////////////////////////////////////////////////////////////////////////////////
+
+#include "interface.h"
+
+void setup();
+void loop();
+void initVariant();
+
+static void TaskArduino(void *pvParameters)
+{
+    initVariant();
+    setup();
+    for (;;)
+    {
+        loop();
+        yield();
+    }
+}
+
+int main(void)
+{
+#ifdef USE_FREERTOS
+    xTaskCreate(
+        TaskArduino,
+        "TaskArduino", /* Text name for the task. */
+#ifdef USE_VFS
+        2500, /* let there be ... Stack size in words, not bytes. */
+#else
+        PICO_STACK_SIZE / 2,
+#endif
+        NULL, /* Parameter  */
+        1,    /* Priority  */
+        NULL);
+    vTaskStartScheduler();
+    while (1)
+        abort();
+#else
+    TaskArduino(NULL);
+#endif
+}

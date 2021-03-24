@@ -38,7 +38,9 @@ extern "C"
     {
         in_addr_t s_addr;
     };
+
     typedef uint8_t sa_family_t;
+
     struct sockaddr_in
     {
         uint8_t sin_len;
@@ -48,6 +50,7 @@ extern "C"
 #define SIN_ZERO_LEN 8
         char sin_zero[SIN_ZERO_LEN];
     };
+    
     struct sockaddr
     {
         uint8_t sa_len;
@@ -87,35 +90,6 @@ extern "C"
 
 #define ntohl(n) (((((unsigned long)(n)&0xFF)) << 24) | ((((unsigned long)(n)&0xFF00)) << 8) | \
                   ((((unsigned long)(n)&0xFF0000)) >> 8) | ((((unsigned long)(n)&0xFF000000)) >> 24))
-
-#define IPPROTO_TCP 6       /* not used, need */
-#define IPPROTO_UDP 17      /* not used, need */
-#define AF_UNIX AF_UNSPEC   /* not used, need */
-#define INET_ADDRSTRLEN 16  /* not used, need */
-#define INET6_ADDRSTRLEN 46 /* not used, need */
-
-/* printf helper */
-#define ADDRESS_TO_IP4(A) (int)(A & 0xFF), (int)((A >> 8) & 0xFF), (int)((A >> 16) & 0xFF), (int)((A >> 24) & 0xFF)
-
-    /* addres info */
-
-    //#include <netdb.h>
-    struct addrinfo
-    {
-        int ai_flags;
-        int ai_family;
-        int ai_socktype;
-        int ai_protocol;
-        size_t ai_addrlen;
-        char *ai_canonname;
-        struct sockaddr *ai_addr;
-        struct addrinfo *ai_next;
-    };
-
-    //#define hostent ????_hostent_s
-    //struct hostent *gethostbyname(const char *name);
-    //int getaddrinfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res);
-    //void freeaddrinfo(struct addrinfo *res);
 
 #ifdef __cplusplus
 }

@@ -91,6 +91,11 @@ extern "C"
     unsigned int millis(void);
     unsigned int seconds(void);
 
+    time_t now(void);
+
+    #define CLOCK_MONOTONIC 4
+    int clock_gettime(clockid_t clock_id, struct timespec *tp);
+
     unsigned int strhash(char *src);
 
     int SysTick_Config(uint32_t ticks);
