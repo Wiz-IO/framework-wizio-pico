@@ -79,7 +79,7 @@ extern "C"
     size_t vfs_read(int fd, char *buf, size_t size);
     _off_t vfs_seek(int fd, _off_t where, int whence);
 
-    extern unsigned int strhash(char *src);
+    extern unsigned int strhash(const void *p);
 
 #define PRE_INIT_FUNC(F) static __attribute__((section(".preinit_array"))) void (*__##F)(void) = F
 

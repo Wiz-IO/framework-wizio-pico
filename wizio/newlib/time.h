@@ -16,41 +16,37 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include "interface.h"
-
-void setup();
-void loop();
-void initVariant();
-
-static void TaskArduino(void *pvParameters)
+#ifndef _PLATFORM_TIME_H
+#define _PLATFORM_TIME_H
+#ifdef __cplusplus
+extern "C"
 {
-    initVariant();
-    setup();
-    for (;;)
-    {
-        loop();
-        yield();
-    }
-}
+#endif
+#include_next <time.h>
+//#warning TEST <TIME.H>
 
-int main(void)
-{
-#ifdef USE_FREERTOS
-    xTaskCreate(
-        TaskArduino,
-        "TaskArduino", /* Text name for the task. */
-#ifdef USE_VFS
-        2500, /* let there be ... Stack size in words, not bytes. */
-#else
-        PICO_STACK_SIZE / 2,
+#define _POSIX_TIMERS 1
+#ifndef CLOCK_MONOTONIC
+#define CLOCK_MONOTONIC (clockid_t)4
 #endif
-        NULL,        /* Parameter  */
-        PRIO_NORMAL, /* Priority  */
-        NULL);
-    vTaskStartScheduler();
-    while (1)
-        abort();
-#else
-    TaskArduino(NULL);
+#ifndef CLOCK_BOOTTIME
+#define CLOCK_BOOTTIME (clockid_t)4
 #endif
+
+    int clock_settime(clockid_t clock_id, const struct timespec *tp);
+    int clock_gettime(clockid_t clock_id, struct timespec *tp);
+    int clock_getres(clockid_t clock_id, struct timespec *res);
+
+    time_t now(void);
+
+    /* ARDUINO LIKE visible from <time.h> */
+    unsigned int micros(void);
+    unsigned int millis(void);
+    unsigned int seconds(void);
+    void delay(unsigned int ms);
+    void delayMicroseconds(unsigned int us);
+
+#ifdef __cplusplus
 }
+#endif
+#endif /* _PLATFORM_TIME_H */

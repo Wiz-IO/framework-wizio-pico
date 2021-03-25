@@ -15,15 +15,10 @@
 // limitations under the License.
 //
 ////////////////////////////////////////////////////////////////////////////////////////
-
-#ifndef __MY_LOCK_H__
-#define __MY_LOCK_H__
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
+#pragma once
 #include_next <sys/lock.h>
+
+#ifdef _RETARGETABLE_LOCKING
 
 #ifndef USE_FREERTOS
 
@@ -40,7 +35,7 @@ struct __lock
 {
     StaticSemaphore_t ignore;
 };
-#endif
+#endif // USE_FREERTOS
 
 typedef _LOCK_T _lock_t;
 
@@ -55,4 +50,4 @@ int _lock_try_acquire_recursive(_lock_t *plock);
 void _lock_release(_lock_t *plock);
 void _lock_release_recursive(_lock_t *plock);
 
-#endif
+#endif // _RETARGETABLE_LOCKING

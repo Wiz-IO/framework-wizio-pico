@@ -16,8 +16,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef SOCKET_H_
-#define SOCKET_H_
+#ifndef _PLATFORM_SOCKET_H_
+#define _PLATFORM_SOCKET_H_
 #ifdef __cplusplus
 extern "C"
 {
@@ -94,4 +94,4 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-#endif /* SOCKET_H_ */
+#endif /* _PLATFORM_SOCKET_H_ */

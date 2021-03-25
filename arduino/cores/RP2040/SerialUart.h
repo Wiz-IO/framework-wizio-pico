@@ -25,7 +25,7 @@
 #include <RingBuffer.h>
 #include "hardware/uart.h"
 #include "hardware/irq.h"
-#include "debug.h"
+#include "arduino_debug.h"
 
 typedef struct tag_UART_CONTEXT
 {

@@ -23,7 +23,16 @@
 #include <errno.h>
 #include <sys/_timeval.h>
 #include <sys/stat.h>
+
+#include "pico/stdlib.h"
 #include "hardware/clocks.h"
+
+#ifdef USE_DEBUG
+#include <dbg.h>
+#define SYS_DBG DBG
+#else
+#define SYS_DBG
+#endif
 
 int vfs_open(const char *path, int flags, int ignore_mode);
 int vfs_close(int fd);
@@ -31,7 +40,7 @@ size_t vfs_write(int fd, const char *buf, size_t size);
 size_t vfs_read(int fd, char *buf, size_t size);
 _off_t vfs_seek(int fd, _off_t where, int whence);
 
-char* __dso_handle; //void* __dso_handle __attribute__ ((__weak__));
+char *__dso_handle; //void* __dso_handle __attribute__ ((__weak__));
 
 // abort() //////////////////////////////////////////////////////////////////////////////
 
@@ -42,7 +51,7 @@ int _getpid(void) { return -1; }
 
 int _isatty(int fd)
 {
-    return (unsigned int)fd < STDERR_FILENO + 1;
+    return (unsigned int)fd <= STDERR_FILENO;
 }
 
 _off_t _lseek_r(struct _reent *r, int fd, _off_t where, int whence)
@@ -104,8 +113,11 @@ _ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
             if (stdout->_cookie && stdout->_write)
                 return stdout->_write(r, stdout->_cookie, buf, len);
 #else // pico-sdk
+#if defined(PICO_STDIO_UART) || defined(PICO_STDIO_USB) || defined(PICO_STDIO_SEMIHOST)
+            //SYS_DBG("(%s) fd=%d\n", __func__, fd);
             extern int _write(int, char *, int);
-            return _write(fd, (char *)buf, len);
+            return _write(1, (char *)buf, len); // pico write to 1
+#endif
 #endif
         }
         else
@@ -131,8 +143,11 @@ _ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
             if (stdin->_cookie && stdin->_read)
                 return stdin->_read(r, stdin->_cookie, buf, len);
 #else // pico-sdk
+#if defined(PICO_STDIO_UART) || defined(PICO_STDIO_USB) || defined(PICO_STDIO_SEMIHOST)
+            //SYS_DBG("(%s) fd=%d\n", __func__, fd);
             extern int _read(int, char *, int);
-            return _read(fd, buf, len);
+            return _read(0, buf, len); // pico read from 0
+#endif
 #endif
         }
         else
@@ -192,20 +207,24 @@ int mkdir(const char *path, mode_t mode)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
+#include <dbg.h>
 
-// Executed before main ( crt0.S )
+/* Executed before main ( crt0.S ) */
 void system_init(void)
 {
-    extern void include_bootloader(void);
-    include_bootloader();
-
 #ifdef USE_DEBUG
     DBG_INIT();
 #endif
 
-#ifdef USE_LOCK
-    extern void init_locks(void);
-    init_locks();
+    extern void include_bootloader(void);
+    include_bootloader();
+
+    extern void include_time(void);
+    include_time();
+
+#if defined(USE_LOCK) && defined(_RETARGETABLE_LOCKING)
+    extern void init_lock(void);
+    init_lock();
 #endif
 
     extern void __sinit(struct _reent *);
@@ -228,15 +247,12 @@ void system_init(void)
     extern void dbg_usb_init(void);
     dbg_usb_init();
 
-    // use RTC
-    extern void include_time(void);
-    include_time();
+    extern int SysTick_Config(uint32_t ticks);
+    SysTick_Config(1 + 0xFFFFFFUL); // roll 0.134 sec
 
     // #define F_CPU f_cpu
     extern uint32_t f_cpu;
     f_cpu = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS) * 1000;
 
-    extern int SysTick_Config(uint32_t ticks);
-    SysTick_Config(1 + 0xFFFFFFUL); // roll 0.134 sec
 #endif
 }

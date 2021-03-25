@@ -13,7 +13,7 @@
 #include "pico/stdio_usb.h"
 #include "hardware/irq.h"
 #include "pico/mutex.h"
-#include "debug.h"
+#include "arduino_debug.h"
 
 static_assert(PICO_STDIO_USB_LOW_PRIORITY_IRQ > RTC_IRQ, "");
 static mutex_t stdio_usb_mutex;

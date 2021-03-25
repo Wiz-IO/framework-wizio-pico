@@ -16,15 +16,20 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include "sys/lock.h"
+#include <sys/lock.h>
+#include <stdlib.h>
 #include "hardware/sync.h"
 
-#ifdef USE_LOCK
+#if defined(USE_LOCK) && defined(_RETARGETABLE_LOCKING)
 
+#ifdef USE_DEBUG
+#include <dbg.h>
+#define LOCK_DBG DBG
+#else
 #define LOCK_DBG
+#endif
 
 #define LOCK_SIMPLE 1
-
 #if LOCK_SIMPLE > 0
 static struct __lock s_common_mutex = {0};
 static struct __lock s_common_recursive_mutex = {0};
@@ -83,7 +88,6 @@ void _lock_init_recursive(_lock_t *lock)
 #ifndef USE_FREERTOS
         *lock = (_lock_t)calloc(1, sizeof(struct __lock));
         mutex_init(&(*lock)->m);
-        LOCK_DBG("[[[INIT]]] %p [ %d ] c[ %d ]\n", *lock, (*lock)->m.owner, (*lock)->m.counter);
 #else
         *lock = (_lock_t)xSemaphoreCreateRecursiveMutex();
 #endif
@@ -109,7 +113,6 @@ void _lock_close(_lock_t *lock)
 
 void _lock_close_recursive(_lock_t *lock)
 {
-    LOCK_DBG("[[[CLOSE]]] %p\n", *lock);
     if (*lock)
     {
 #ifndef USE_FREERTOS
@@ -134,9 +137,7 @@ void _lock_acquire(_lock_t *lock)
 void _lock_acquire_recursive(_lock_t *lock)
 {
 #ifndef USE_FREERTOS
-    //LOCK_DBG("[TAKE+] %p [ %d ] c[ %d ]\n", *lock, (*lock)->m.owner, (*lock)->m.counter);
     mutex_enter_blocking_recursive(&(*lock)->m);
-    LOCK_DBG("[TAKE] %p [ %d ] c[ %d ]\n", *lock, (*lock)->m.owner, (*lock)->m.counter);
 #else
     xSemaphoreTakeRecursive((SemaphoreHandle_t)(*lock), portMAX_DELAY);
 #endif
@@ -172,10 +173,7 @@ void _lock_release(_lock_t *lock)
 void _lock_release_recursive(_lock_t *lock)
 {
 #ifndef USE_FREERTOS
-
-    //LOCK_DBG("[GIVE+] %p [ %d ] c[ %d ]\n", *lock, (*lock)->m.owner, (*lock)->m.counter);
     mutex_exit_recursive(&(*lock)->m);
-    LOCK_DBG("[GIVE] %p [ %d ] c[ %d ]\n", *lock, (*lock)->m.owner, (*lock)->m.counter);
 #else
     xSemaphoreGiveRecursive((SemaphoreHandle_t)(*lock));
 #endif
@@ -186,56 +184,65 @@ void _lock_release_recursive(_lock_t *lock)
 #if 1
 void __retarget_lock_init(_LOCK_T *lock)
 {
+    //LOCK_DBG("(%s)\n", __func__);
     *lock = NULL;
     _lock_init(lock);
 }
 
 void __retarget_lock_init_recursive(_LOCK_T *lock)
 {
+    //LOCK_DBG("(%s)\n", __func__);
     *lock = NULL;
     _lock_init_recursive(lock);
 }
 
 void __retarget_lock_close(_LOCK_T lock)
 {
+    //LOCK_DBG("(%s)\n", __func__);
     _lock_close(&lock);
 }
 void __retarget_lock_close_recursive(_LOCK_T lock) __attribute__((alias("__retarget_lock_close")));
 
 void __retarget_lock_acquire(_LOCK_T lock)
 {
+    //LOCK_DBG("(%s)\n", __func__);
     _lock_acquire(&lock);
 }
 
 void __retarget_lock_acquire_recursive(_LOCK_T lock)
 {
+    //LOCK_DBG("(%s)\n", __func__);
     _lock_acquire_recursive(&lock);
 }
 
 int __retarget_lock_try_acquire(_LOCK_T lock)
 {
+    //LOCK_DBG("(%s)\n", __func__);
     return _lock_try_acquire(&lock);
 }
 
 int __retarget_lock_try_acquire_recursive(_LOCK_T lock)
 {
+    //LOCK_DBG("(%s)\n", __func__);
     return _lock_try_acquire_recursive(&lock);
 }
 
 void __retarget_lock_release(_LOCK_T lock)
 {
+    //LOCK_DBG("(%s)\n", __func__);
     _lock_release(&lock);
 }
 
 void __retarget_lock_release_recursive(_LOCK_T lock)
 {
+    //LOCK_DBG("(%s)\n", __func__);
     _lock_release_recursive(&lock);
 }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void init_locks(void)
+void init_lock(void)
 {
 #ifndef USE_FREERTOS
 
@@ -274,6 +281,7 @@ void init_locks(void)
 #endif
 
 #endif
+    //LOCK_DBG("(%s)\n", __func__);
 }
 
-#endif // USE_LOCK
+#endif // ( USE_LOCK ) ( _RETARGETABLE_LOCKING )
