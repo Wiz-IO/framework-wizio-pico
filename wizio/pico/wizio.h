@@ -85,51 +85,11 @@ extern "C"
 #define MUTEX_LOCK(pM) mutex_enter_blocking(MUTEX_PTYPE pM)
 #define MUTEX_UNLOCK(pM) mutex_exit(MUTEX_PTYPE pM)
 
-#endif
+#endif // USE_FREERTOS
 
-    unsigned int micros(void);
-    unsigned int millis(void);
-    unsigned int seconds(void);
-
-    time_t now(void);
-
-    #define CLOCK_MONOTONIC 4
-    int clock_gettime(clockid_t clock_id, struct timespec *tp);
-
-    unsigned int strhash(char *src);
+    unsigned int strhash(const void *p);
 
     int SysTick_Config(uint32_t ticks);
-
-/* 
-    Critical Debug
-*/
-
-#define DBG_UART PICO_DEFAULT_UART_INSTANCE
-#define DBG_BUFFER_SIZE 256
-    extern char DBG_BUFFER[DBG_BUFFER_SIZE];
-
-    extern bool DBG_IS_OPEN;
-#define DBG(FRM, ...) /* Serial must be open */                                         \
-    if (DBG_IS_OPEN)                                                                    \
-    {                                                                                   \
-        uint32_t _prim = save_and_disable_interrupts();                                 \
-        sprintf(DBG_BUFFER, FRM, ##__VA_ARGS__);                                        \
-        uart_write_blocking(DBG_UART, (const uint8_t *)DBG_BUFFER, strlen(DBG_BUFFER)); \
-        restore_interrupts(_prim);                                                      \
-    }
-
-#define DBG_INIT()                                         \
-    {                                                      \
-        gpio_set_function(0, 2);                           \
-        gpio_set_function(1, 2);                           \
-        uart_init(DBG_UART, 115200);                       \
-        uart_set_hw_flow(DBG_UART, false, false);          \
-        uart_set_format(DBG_UART, 8, 1, UART_PARITY_NONE); \
-        uart_set_fifo_enabled(DBG_UART, false);            \
-        DBG_IS_OPEN = true;                                \
-        memset(DBG_BUFFER, 0, DBG_BUFFER_SIZE);            \
-        DBG("[SYS] DEBUG MODE\n");                         \
-    }
 
 #ifdef __cplusplus
 }

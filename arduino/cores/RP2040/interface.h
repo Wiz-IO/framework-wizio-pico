@@ -24,7 +24,7 @@ extern "C"
 #endif
 
 #include <wizio.h>
-#include "debug.h"
+#include "arduino_debug.h"
 
 #define PRE_INIT_FUNC(F) static __attribute__((section(".preinit_array"))) void (*__##F)(void) = F
 #define INLINE inline __attribute__((always_inline))
@@ -40,25 +40,7 @@ extern "C"
     static INLINE void interrupts(void) { restore_interrupts(arduino_lock); }
     static INLINE void noInterrupts(void) { arduino_lock = save_and_disable_interrupts(); }
     void attachInterruptEx(uint8_t pin, void (*cb)(uint32_t pin_event), int mode); // enum gpio_irq_level
-
-    INLINE void delayMicroseconds(unsigned int us)
-    {
-        sleep_us(us);
-    };
-
-    INLINE void delay(unsigned int ms)
-    {
-#ifdef USE_FREERTOS
-        vTaskDelay(pdMS_TO_TICKS(ms));
-#else
-    sleep_ms(ms);
-#endif
-    }
-
-    unsigned int micros(void);
-    unsigned int millis(void);
-    unsigned int seconds(void);
-
+    
     extern uint32_t f_cpu;
     bool setCpuFrequency(uint32_t freq_hz);
 #define F_CPU f_cpu
@@ -70,7 +52,6 @@ extern "C"
     extern char *utoa(unsigned int value, char *buffer, int radix);
     static inline char *ltoa(long value, char *result, int base) { return utoa(value, result, base); }
     static inline char *ultoa(unsigned long value, char *result, int base) { return utoa(value, result, base); }
-    unsigned int strhash(char *src);
 
     bool pinGetDir(uint8_t pin);
 #define digitalPinToPort(p)

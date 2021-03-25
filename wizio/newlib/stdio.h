@@ -15,7 +15,25 @@
 // limitations under the License.
 //
 ////////////////////////////////////////////////////////////////////////////////////////
-#pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#ifndef _PLATFORM_STDIO_H
+#define _PLATFORM_STDIO_H
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+#include_next <stdio.h>
+
+#include <stdbool.h>
+
+/* if stdio is not used - weak */
+void stdio_init_all(void) __attribute__((weak)); 
+
+/* wait terminal */
+bool stdio_usb_connected(void) __attribute__((weak));
+#define stdio_connected() stdio_usb_connected()
+
+#ifdef __cplusplus
+}
+#endif
+#endif /* _PLATFORM_STDIO_H */

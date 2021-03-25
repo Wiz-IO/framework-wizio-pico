@@ -14,13 +14,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-//  TODO TODO TODO
-//
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include <errno.h>
+// TODO test
+
 #include <sys/times.h> // struct tms
-#include <time.h>
+#include <sys/time.h>
+#include <reent.h>
+#include <errno.h>
 
 #include "hardware/rtc.h"
 #include "pico/stdlib.h"
@@ -47,7 +48,7 @@ time_t now(void)
     return mktime(&ti);
 }
 
-int _gettimeofday_r(struct _reent *ignore, struct timeval *tv, void *tz) /* time() */
+int _gettimeofday(struct timeval *tv, void *tz)
 {
     (void)tz;
     if (tv)
@@ -69,16 +70,23 @@ int _gettimeofday_r(struct _reent *ignore, struct timeval *tv, void *tz) /* time
     return -1;
 }
 
+int _gettimeofday_r(struct _reent *ignore, struct timeval *tv, void *tz)
+{
+    return _gettimeofday(tv, tz);
+}
+
+/* returns the number of clock ticks that have elapsed since an arbitrary point in the past. */
 clock_t _times_r(struct _reent *r, struct tms *ptms) /* clock() */
 {
 #ifdef USE_FREERTOS
-    ptms->tms_stime = xTaskGetTickCount() * (portTICK_PERIOD_MS * CLK_TCK / 1000); // ???
+    ptms->tms_stime = xTaskGetTickCount() * (portTICK_PERIOD_MS * CLK_TCK / 1000);
 #else
-    ptms->tms_stime = time_us_64(); /* ???? */
+    ptms->tms_stime = to_ms_since_boot(get_absolute_time()); /* system time */
 #endif
     ptms->tms_cstime = 0; /* system time of children */
     ptms->tms_cutime = 0; /* user time of children */
     ptms->tms_utime = 0;  /* user time */
+
     struct timeval tv = {0, 0};
     _gettimeofday_r(r, &tv, NULL);
     return (clock_t)tv.tv_sec;
@@ -100,7 +108,7 @@ int clock_gettime(clockid_t clock_id, struct timespec *tp)
         tp->tv_sec = tv.tv_sec;
         tp->tv_nsec = tv.tv_usec * 1000L;
         break;
-    case 4: //CLOCK_MONOTONIC:
+    case CLOCK_MONOTONIC:
         monotonic_time_us = to_us_since_boot(get_absolute_time());
         tp->tv_sec = monotonic_time_us / 1000000LL;
         tp->tv_nsec = (monotonic_time_us % 1000000LL) * 1000L;
@@ -112,7 +120,7 @@ int clock_gettime(clockid_t clock_id, struct timespec *tp)
     return 0;
 }
 
-int usleep(uint64_t us) //useconds_t
+int usleep(uint64_t us) // useconds_t
 {
 #ifndef USE_FREERTOS
     sleep_us((uint64_t)us);
@@ -136,18 +144,49 @@ unsigned int sleep(unsigned int seconds)
     return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
+/* ARDUINO LIKE visible from <time.h> */
+
+unsigned int micros(void)
+{
+    return to_us_since_boot(get_absolute_time());
+}
+
+unsigned int millis(void)
+{
+    return to_ms_since_boot(get_absolute_time());
+}
+
+unsigned int seconds(void)
+{
+    return millis() / 1000;
+}
+
+__inline void delayMicroseconds(unsigned int us)
+{
+    sleep_us(us);
+};
+
+__inline void delay(unsigned int ms)
+{
+#ifdef USE_FREERTOS
+    vTaskDelay(pdMS_TO_TICKS(ms));
+#else
+    sleep_ms(ms);
+#endif
+}
 
 void include_time(void)
 {
+#ifdef ARDUINO
     datetime_t t = {
         .year = 2021,
         .month = 3,
-        .day = 19,
+        .day = 25,
         .dotw = 0, // ?
         .hour = 0,
         .min = 0,
         .sec = 0};
     rtc_init(); // Start the RTC
     rtc_set_datetime(&t);
+#endif
 }

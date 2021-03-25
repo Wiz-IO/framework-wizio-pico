@@ -20,7 +20,7 @@
 #ifdef USE_FATFS
 #include "VFS_FATFS.h"
 
-#warning FATFS is not tested with SD card...
+#pragma message "FATFS is not tested with SD card..."
 
 #define FFS_LOG(ERR, TXT) printf("[FFS] %s( %d ) %s\n", __func__, (int)ERR, (char *)TXT);
 #define FFS_ERR(ERR, TXT) printf("[ERROR] at line %d, %s( %d ) %s\n", __LINE__, __func__, (int)ERR, (char *)TXT);

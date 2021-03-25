@@ -18,12 +18,16 @@
 
 #include "wizio.h"
 
+#ifdef USE_DEBUG
+#include "dbg.h"
 bool DBG_IS_OPEN = false;
 char DBG_BUFFER[DBG_BUFFER_SIZE];
+#endif
 
-unsigned int strhash(char *src)
+unsigned int strhash(const void *p)
 {
     unsigned int h = 0, v, i;
+    char * src = (char*)p;
     if (src)
     {
         for (h = 0, i = 0; i < strlen(src); i++)
@@ -36,28 +40,6 @@ unsigned int strhash(char *src)
     return h;
 }
 
-unsigned int micros(void)
-{
-    return to_us_since_boot(get_absolute_time());
-}
-
-unsigned int millis(void)
-{
-    return to_ms_since_boot(get_absolute_time());
-}
-
-unsigned int seconds(void)
-{
-    return millis() / 1000;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#include "hardware/structs/systick.h"
-#define SysTick_VAL_CURRENT_Pos 0                                       /*!< SysTick VAL: CURRENT Position */
-#define SysTick_VAL_CURRENT_Msk (0xFFFFFFUL << SysTick_VAL_CURRENT_Pos) /*!< SysTick VAL: CURRENT Mask */
-#define TICKSGN ((SysTick_VAL_CURRENT_Msk + 1) >> 1)
-
 int SysTick_Config(uint32_t ticks)
 {
     if ((ticks - 1) > 0xFFFFFFUL)
@@ -67,17 +49,3 @@ int SysTick_Config(uint32_t ticks)
     systick_hw->csr = 5;         /* Enable  */
     return 0;
 }
-
-/*
-void waittick(uint32_t step)
-{
-    static uint32_t tick0;
-    if (!step)
-    {
-        tick0 = systick_hw->cvr;
-        return;
-    }
-    tick0 -= step;
-    while ((tick0 - systick_hw->cvr) & TICKSGN);
-}
-*/

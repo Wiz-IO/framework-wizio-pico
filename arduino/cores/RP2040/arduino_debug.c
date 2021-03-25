@@ -16,8 +16,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#include "wizio.h"
-#include "debug.h"
+#include <wizio.h>
+#include "arduino_debug.h"
 
 drv_t stdio_drv;
 
@@ -60,14 +60,14 @@ static int dbg_uart_read_r(struct _reent *r, _PTR p, char *buf, int len)
 
 void dbg_uart_init(void)
 {
-    uart_deinit(DBG_UART);
+    uart_deinit(PICO_DEFAULT_UART_INSTANCE);
     gpio_set_function(PICO_DEFAULT_UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(PICO_DEFAULT_UART_RX_PIN, GPIO_FUNC_UART);
-    uart_init(DBG_UART, 115200);
-    uart_set_hw_flow(DBG_UART, false, false);
-    uart_set_format(DBG_UART, 8, 1, UART_PARITY_NONE);
-    uart_set_fifo_enabled(DBG_UART, false);
-    stdio_drv.ctx = DBG_UART;
+    uart_init(PICO_DEFAULT_UART_INSTANCE, 115200);
+    uart_set_hw_flow(PICO_DEFAULT_UART_INSTANCE, false, false);
+    uart_set_format(PICO_DEFAULT_UART_INSTANCE, 8, 1, UART_PARITY_NONE);
+    uart_set_fifo_enabled(PICO_DEFAULT_UART_INSTANCE, false);
+    stdio_drv.ctx = PICO_DEFAULT_UART_INSTANCE;
     stdio_drv.write_r = dbg_uart_write_r;
     stdio_drv.read_r = dbg_uart_read_r;
     dbg_retarget(&stdio_drv);

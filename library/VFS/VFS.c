@@ -48,7 +48,7 @@ static inline bool is_valid_dev(const char *name)
 static vfs_node *create_node(const vfs_t *fs)
 {
     vfs_node *node = (vfs_node *)malloc(sizeof(vfs_node));
-    node->fs = fs;
+    node->fs = (vfs_t *)fs;
     node->prev = NULL;
     node->next = NULL;
     return node;
@@ -126,7 +126,7 @@ static vfs_t *vfs_add_fs(const char *name, const void *file_system_context)
     if (fs)
     {
         vfs_list.add(&vfs_list, fs);
-        fs->ctx = file_system_context;
+        fs->ctx = (void*)file_system_context;
         fs->name[0] = name[0];
         fs->name[1] = ':';
         fs->name[2] = 0;

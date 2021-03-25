@@ -97,4 +97,8 @@
 
 #define configUSE_APPLICATION_TASK_TAG          1 /* used from pthread */
 
+#define PRIO_LO                                 1 /* IDLE = 0 */
+#define PRIO_NORMAL                             2 /* used from Arduino */
+#define PRIO_HI                                 3
+
 #endif /* FREERTOS_CONFIG_H */

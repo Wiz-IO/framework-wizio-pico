@@ -258,7 +258,7 @@ static const struct lfs_config lfs_ram_cfg = {
 static lfs_context_t lfs_ram_ctx = {
     .op = &lfs_oper,
     .lfs = &lfs_ram,
-    .cfg = &lfs_ram_cfg,
+    .cfg = (struct lfs_config *)&lfs_ram_cfg,
     .pMutex = NULL,
 };
 
@@ -283,7 +283,7 @@ PRE_INIT_FUNC(lfs_ram_pre_init);
 
 extern char __flash_binary_end;
 
-static inline const uint32_t lfs_rom_memory(void)
+static inline uint32_t lfs_rom_memory(void)
 {
     return ((uint32_t)&__flash_binary_end + FLASH_SECTOR_SIZE - 1) & ~(FLASH_SECTOR_SIZE - 1);
 }
@@ -367,7 +367,7 @@ static const struct lfs_config lfs_rom_cfg = {
 static lfs_context_t lfs_rom_ctx = {
     .op = &lfs_oper,
     .lfs = &lfs_rom,
-    .cfg = &lfs_rom_cfg,
+    .cfg = (struct lfs_config *)&lfs_rom_cfg,
     .pMutex = NULL,
 };
 

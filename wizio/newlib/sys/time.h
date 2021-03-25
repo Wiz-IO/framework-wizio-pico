@@ -14,8 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////  
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include <_ansi.h>
+#include <sys/types.h>
+#define __rtems__
+#include_next <sys/time.h>
+#undef __rtems__

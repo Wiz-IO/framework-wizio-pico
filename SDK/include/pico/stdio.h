@@ -100,10 +100,6 @@ void stdio_filter_driver(stdio_driver_t *driver);
  */
 void stdio_set_translate_crlf(stdio_driver_t *driver, bool translate);
 
-/* WizIO: wait terminal */
-bool stdio_usb_connected(void) __attribute__((weak));
-#define stdio_connected() stdio_usb_connected()
-
 #ifdef __cplusplus
 }
 #endif
