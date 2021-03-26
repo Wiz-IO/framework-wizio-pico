@@ -3,7 +3,7 @@
 build_flags = -D PICO_USB ; load TyniUSB
 ```
 
-'''cpp
+```cpp
 #include <Arduino.h>
 #include "SerialUSB.h"
 SerialUSB usb;
@@ -19,4 +19,4 @@ void loop()
 {
   usb.prinln("loop");
 }
-'''
+```
