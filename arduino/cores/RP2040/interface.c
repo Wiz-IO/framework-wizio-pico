@@ -29,3 +29,11 @@ bool setCpuFrequency(uint32_t freq_hz)
         f_cpu = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS) * 1000;
     return res;
 }
+
+#ifdef PICO_PRINTF_PICO
+bool weak_raw_vprintf(const char *fmt, va_list args)
+{
+    vprintf(fmt, args);
+    return true;
+}
+#endif
