@@ -38,6 +38,8 @@ extern "C"
     int clock_getres(clockid_t clock_id, struct timespec *res);
 
     time_t now(void);
+    bool set_now_tm(struct tm *p);
+    bool set_now(time_t T);    
 
     /* ARDUINO LIKE visible from <time.h> */
     unsigned int micros(void);
