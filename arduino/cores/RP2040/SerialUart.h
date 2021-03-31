@@ -111,7 +111,7 @@ public:
         begin(baud, 8, 1, UART_PARITY_NONE, retarget);
     }
 
-    void begin(unsigned long baud, uint8_t config, bool retarget = false)
+    void begin(unsigned long baud, int config, bool retarget = false)
     {
         begin(baud, config >> 8 & 0xF /*data*/, config & 4 /*stop*/ & 0xF, config & 0xF /*parity*/, retarget);
     }
