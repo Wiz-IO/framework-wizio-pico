@@ -1,5 +1,4 @@
 /* 
-    The file system WORK ONLY with Arduino !!!
 
 WIKI:
         https://github.com/Wiz-IO/wizio-pico/wiki/ARDUINO#vfs--file-system
