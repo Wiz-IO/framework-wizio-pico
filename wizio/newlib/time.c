@@ -175,6 +175,24 @@ __inline void delay(unsigned int ms)
 #endif
 }
 
+bool set_now_tm(struct tm *p)
+{
+    datetime_t dt;
+    dt.sec = p->tm_sec;   /// pico < 0..59
+    dt.min = p->tm_min;   /// pico < 0..59
+    dt.hour = p->tm_hour; /// pico < 0..23
+    dt.day = p->tm_mday;  /// pico < 1..28,29,30,31 depending on month
+    dt.month = p->tm_mon; /// pico < 1..12, 1 is January
+    dt.year = p->tm_year; /// pico < 0..4095
+    dt.dotw = p->tm_wday; /// pico < 0..6, 0 is Sunday
+    return rtc_set_datetime(&dt);
+}
+
+bool set_now(time_t t)
+{
+    return set_now_tm(localtime(&t));
+}
+
 void include_time(void)
 {
 #ifdef ARDUINO
@@ -189,4 +207,6 @@ void include_time(void)
     rtc_init(); // Start the RTC
     rtc_set_datetime(&t);
 #endif
+    //setenv("TZ", "EST5EDT,M3.2.0/2,M11.1.0", 1);
+    //tzset();
 }
