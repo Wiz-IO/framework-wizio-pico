@@ -255,4 +255,9 @@ void system_init(void)
     f_cpu = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS) * 1000;
 
 #endif
+    
+#ifdef DAP
+    extern void dap_init(void);
+    dap_init();
+#endif   
 }
