@@ -24,6 +24,7 @@
 
 #include "HardwareSerial.h"
 #include "hardware/irq.h"
+#include "pico/time.h"
 #include "tusb.h"
 
 class SerialUSB : public HardwareSerial
@@ -46,7 +47,7 @@ public:
         begin(baud, 0, retarget);
     }
 
-    void begin(unsigned long baud, uint8_t config, bool retarget = false)
+    void begin(unsigned long baud, int config, bool retarget = false)
     {
         end();
         tusb_init(); // initialize TinyUSB
