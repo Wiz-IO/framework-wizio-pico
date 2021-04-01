@@ -25,6 +25,8 @@ extern "C"
 #include_next <time.h>
 //#warning TEST <TIME.H>
 
+#include_next <stdbool.h>
+    
 #define _POSIX_TIMERS 1
 #ifndef CLOCK_MONOTONIC
 #define CLOCK_MONOTONIC (clockid_t)4
