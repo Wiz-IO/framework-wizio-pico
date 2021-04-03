@@ -178,7 +178,6 @@ void tud_hid_set_report_cb(uint8_t report_id, hid_report_type_t report_type, uin
 //--------------------------------------------------------------------+
 // RUN
 //--------------------------------------------------------------------+
-#include "dbg.h"
 
 uint32_t CPU_F;
 
@@ -193,6 +192,5 @@ static void dap_main(void)
 
 void dap_init(void)
 {
-  DBG_INIT();
   multicore_launch_core1(dap_main);
 }
