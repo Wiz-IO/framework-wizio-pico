@@ -52,18 +52,18 @@ This information includes:
  - Optional information about a connected Target Device (for Evaluation Boards).
 */
 
-//#include "cmsis_compiler.h"
-//#include "bsp/board.h"
-
 #include <stdint.h>
 #include <hardware/regs/resets.h>
 #include <hardware/structs/resets.h>
 #include <hardware/regs/syscfg.h>
 #include <hardware/structs/syscfg.h>
+#include <pico/time.h>
+
+extern uint32_t CPU_F;
 
 /// Processor Clock of the Cortex-M MCU used in the Debug Unit.
 /// This value is used to calculate the SWD/JTAG clock speed.
-#define CPU_CLOCK               48000000U       ///< Specifies the CPU Clock in Hz.
+#define CPU_CLOCK             CPU_F             ///< Specifies the CPU Clock in Hz.
 
 /// Number of processor cycles for I/O Port write operations.
 /// This value is used to calculate the SWD/JTAG clock speed that is generated with I/O
@@ -499,6 +499,5 @@ __STATIC_INLINE uint8_t RESET_TARGET (void) {
 }
 
 ///@}
-
 
 #endif /* __DAP_CONFIG_H__ */

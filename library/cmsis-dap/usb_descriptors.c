@@ -1,6 +1,7 @@
 #include "tusb.h"
 #include "DAP.h"
 #include "pico/multicore.h"
+#include "hardware/clocks.h"
 
 // String Descriptor Index
 enum
@@ -177,16 +178,21 @@ void tud_hid_set_report_cb(uint8_t report_id, hid_report_type_t report_type, uin
 //--------------------------------------------------------------------+
 // RUN
 //--------------------------------------------------------------------+
+#include "dbg.h"
+
+uint32_t CPU_F;
 
 static void dap_main(void)
 {
-    DAP_Setup();
-    tusb_init();
-    while (true)
-        tud_task();
+  CPU_F = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS) * 1000;
+  DAP_Setup();
+  tusb_init();
+  while (true)
+    tud_task();
 }
 
 void dap_init(void)
 {
-    multicore_launch_core1(dap_main);
+  DBG_INIT();
+  multicore_launch_core1(dap_main);
 }
