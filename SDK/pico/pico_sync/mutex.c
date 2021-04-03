@@ -118,13 +118,6 @@ int __time_critical_func(mutex_try_enter_recursive)(mutex_t *mtx, uint32_t *owne
         return 1; // pdPASS -> pdTRUE -> 1
     }
     bool xReturn = mutex_try_enter(mtx, owner_out); // FIX? return ... true = unowned,
-    /* 
-     * xReturn = xQueueSemaphoreTake( pxMutex, 0 );
-     * pdPASS(1) will only be returned if the mutex was successfully obtained.  
-     * The calling task may have entered the Blocked state before reaching here. 
-     * https://github.com/FreeRTOS/FreeRTOS-Kernel/blob/23f641850d2428eac3e164d6e735e6e92dc3914a/queue.c#L691
-     * 
-     */
     if (xReturn != false) { // FIX? ... if ( xReturn != pdFAIL(0) )
         ++mtx->counter;
     }

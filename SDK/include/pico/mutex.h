@@ -97,12 +97,6 @@ bool mutex_enter_block_until(mutex_t *mtx, absolute_time_t until);
  */
 void mutex_exit(mutex_t *mtx);
 
-// TODO: doc
-void mutex_init_recursive(mutex_t *mtx);
-void mutex_exit_recursive(mutex_t *mtx);
-void mutex_enter_blocking_recursive(mutex_t *mtx);
-int mutex_try_enter_recursive(mutex_t *mtx, uint32_t *owner_out);
-
 /*! \brief Test for mutex initialised state
  *  \ingroup mutex
  *

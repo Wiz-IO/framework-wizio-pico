@@ -10,12 +10,13 @@
 #include "pico/time.h"
 #include "pico/stdio/driver.h"
 #include "pico/binary_info.h"
+#include "pico/mutex.h"
 #include "hardware/irq.h"
 
 static_assert(PICO_STDIO_USB_LOW_PRIORITY_IRQ > RTC_IRQ, ""); // note RTC_IRQ is currently the last one
 static mutex_t stdio_usb_mutex;
 
-static void low_priority_worker_irq() {
+static void low_priority_worker_irq(void) {
     // if the mutex is already owned, then we are in user code
     // in this file which will do a tud_task itself, so we'll just do nothing
     // until the next tick; we won't starve
@@ -124,4 +125,4 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const* p_line_coding)
         reset_usb_boot(0, 0);
     }
 }
-#endif
+#endif // PICO_STDIO_USB_ENABLE_RESET_VIA_VENDOR_INTERFACE
