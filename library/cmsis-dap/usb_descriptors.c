@@ -1,6 +1,7 @@
 #include "tusb.h"
 #include "DAP.h"
 #include "pico/multicore.h"
+#include "pico/unique_id.h"
 #include "hardware/clocks.h"
 
 // String Descriptor Index
@@ -184,6 +185,16 @@ uint32_t CPU_F;
 static void dap_main(void)
 {
   CPU_F = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS) * 1000;
+
+  pico_unique_board_id_t pico;
+  pico_get_unique_board_id(&pico);
+  char *p = unique_id;
+  for (int i = 0; i < 8; i++)
+  {
+    snprintf(p, 3, "%X", (int)pico.id[i]);
+    p += 2;
+  }
+
   DAP_Setup();
   tusb_init();
   while (true)
