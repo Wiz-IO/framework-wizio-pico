@@ -233,7 +233,7 @@ void system_init(void)
     stderr->_cookie = NULL;
     stdin->_cookie = NULL;
 
-#ifdef ARDUINO
+#if defined(ARDUINO) &&  !defined(BAREMETAL)
 
     // build_flags = -D PICO_STDIO_SEMIHOSTING
     extern void semihosting_init(void);
