@@ -31,7 +31,7 @@
 #include "Binary.h"
 
 #ifdef __cplusplus
-//#include "Interrupts.h"
+#include "Interrupts.h"
 #include "IPAddress.h"
 #include "Print.h"
 #include "Printable.h"
