@@ -109,16 +109,19 @@ _ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
     {
         if (_isatty(fd))
         {
-#ifdef ARDUINO
+
+//#ifdef ARDUINO
             if (stdout->_cookie && stdout->_write)
                 return stdout->_write(r, stdout->_cookie, buf, len);
-#else // pico-sdk
+//#else // pico-sdk
+
 #if defined(PICO_STDIO_UART) || defined(PICO_STDIO_USB) || defined(PICO_STDIO_SEMIHOST)
             //SYS_DBG("(%s) fd=%d\n", __func__, fd);
             extern int _write(int, char *, int);
             return _write(1, (char *)buf, len); // pico write to 1
 #endif
-#endif
+//#endif
+
         }
         else
         {
@@ -139,16 +142,18 @@ _ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
     {
         if (fd == STDIN_FILENO)
         {
-#ifdef ARDUINO
+
+//#ifdef ARDUINO
             if (stdin->_cookie && stdin->_read)
                 return stdin->_read(r, stdin->_cookie, buf, len);
-#else // pico-sdk
+//#else // pico-sdk
 #if defined(PICO_STDIO_UART) || defined(PICO_STDIO_USB) || defined(PICO_STDIO_SEMIHOST)
             //SYS_DBG("(%s) fd=%d\n", __func__, fd);
             extern int _read(int, char *, int);
             return _read(0, buf, len); // pico read from 0
 #endif
-#endif
+//#endif
+
         }
         else
         {
@@ -255,9 +260,9 @@ void system_init(void)
     f_cpu = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS) * 1000;
 
 #endif
-    
+
 #ifdef DAP
     extern void dap_init(void);
     dap_init();
-#endif   
+#endif
 }
