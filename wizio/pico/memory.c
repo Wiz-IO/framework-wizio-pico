@@ -16,7 +16,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#if defined(ARDUINO) || defined(USE_FREERTOS)
+#if (defined(ARDUINO) || defined(USE_FREERTOS)) &&  !defined(BAREMETAL)
 #include <string.h>
 
 extern void *pvPortMalloc(size_t xWantedSize);
