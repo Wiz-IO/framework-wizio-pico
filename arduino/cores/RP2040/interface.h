@@ -69,7 +69,7 @@ extern "C"
 #define get_message() multicore_fifo_pop_blocking()
 #define get_message_us(MSG) multicore_fifo_pop_blocking(TIMEOUT_US, MSG)
 
-    INLINE void yield(void)
+    static INLINE void yield(void)
     {
 #ifdef USE_FREERTOS
         vTaskDelay(0);
