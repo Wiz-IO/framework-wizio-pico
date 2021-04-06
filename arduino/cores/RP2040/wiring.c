@@ -116,7 +116,6 @@ void detachInterrupt(uint8_t pin)
 
 bool analogSetFrequency(uint8_t pin, uint32_t freq)
 {
-    printf("[PWM]] freq = %lu\n", freq);
     pins[pin].pwm_frequency = 0;
     pins[pin].pwm_slice = pwm_gpio_to_slice_num(pin);
     pins[pin].pwm_channel = pwm_gpio_to_channel(pin);
@@ -151,18 +150,15 @@ bool analogSetFrequency(uint8_t pin, uint32_t freq)
     }
     if (div16_top < 16)
     {
-        printf("[ERROR] pwm freq too large\n");
         return false; // freq too large
     }
     else if (div16_top >= 256 * 16)
     {
-        printf("[ERROR] pwm freq too large\n");
         return false; // freq too small
     }
     pwm_hw->slice[pins[pin].pwm_slice].div = div16_top;
     pwm_hw->slice[pins[pin].pwm_slice].top = top;
     pins[pin].pwm_frequency = freq;
-    printf("[PWM]] freq : %lu\n", freq);
     return true;
 }
 
