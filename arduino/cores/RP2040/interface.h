@@ -26,6 +26,9 @@ extern "C"
 #include <wizio.h>
 #include "arduino_debug.h"
 
+typedef void (*voidFuncPtr)(void);
+typedef void (*voidFuncPtrParam)(void*);
+
 #define PRE_INIT_FUNC(F) static __attribute__((section(".preinit_array"))) void (*__##F)(void) = F
 #define INLINE inline __attribute__((always_inline))
 
@@ -39,7 +42,7 @@ extern "C"
     extern uint32_t arduino_lock;
     static INLINE void interrupts(void) { restore_interrupts(arduino_lock); }
     static INLINE void noInterrupts(void) { arduino_lock = save_and_disable_interrupts(); }
-    void attachInterruptEx(uint8_t pin, void (*cb)(uint32_t pin_event), int mode); // enum gpio_irq_level
+    void attachInterruptEx(uint8_t pin, voidFuncPtrParam cb, int mode);
     
     extern uint32_t f_cpu;
     bool setCpuFrequency(uint32_t freq_hz);
@@ -61,6 +64,7 @@ extern "C"
 #define digitalPinToSPIDevice(p)
 #define digitalPinToSPIClockId(p)
     float temperatureRead(void);
+    bool analogSetFrequency(uint8_t pin, uint32_t freq);
 
 #define run_core(core1_loop_func) multicore_launch_core1(core1_loop_func)
 #define reset_core() multicore_reset_core1()
