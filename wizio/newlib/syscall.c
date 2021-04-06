@@ -40,7 +40,7 @@ size_t vfs_write(int fd, const char *buf, size_t size);
 size_t vfs_read(int fd, char *buf, size_t size);
 _off_t vfs_seek(int fd, _off_t where, int whence);
 
-char *__dso_handle; //void* __dso_handle __attribute__ ((__weak__));
+char *__dso_handle; // void* __dso_handle __attribute__ ((__weak__));
 
 // abort() //////////////////////////////////////////////////////////////////////////////
 
@@ -60,7 +60,6 @@ _off_t _lseek_r(struct _reent *r, int fd, _off_t where, int whence)
 #ifdef USE_VFS
     err = vfs_seek(fd, where, whence);
 #endif
-    //__errno_r(r) = (err < 0) ? -err : 0;
     errno = (err < 0) ? -err : 0;
     return err;
 }
@@ -71,7 +70,6 @@ int _fstat_r(struct _reent *r, int fd, struct stat *st)
 #ifdef USE_VFS
 // TODO
 #endif
-    //__errno_r(r) = (err < 0) ? -err : 0;
     errno = (err < 0) ? -err : 0;
     return err;
 }
@@ -85,7 +83,6 @@ int _close_r(struct _reent *r, int fd)
         err = vfs_close(fd);
 #endif
     }
-    //__errno_r(r) = (err < 0) ? -err : 0;
     errno = (err < 0) ? -err : 0;
     return err;
 }
@@ -97,7 +94,6 @@ int _open_r(struct _reent *r, const char *path, int flags, int mode)
     if (path)
         err = vfs_open(path, flags, mode);
 #endif
-    //__errno_r(r) = (err < 0) ? -err : 0;
     errno = (err < 0) ? -err : 0;
     return err;
 }
@@ -109,19 +105,12 @@ _ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
     {
         if (_isatty(fd))
         {
-
-//#ifdef ARDUINO
             if (stdout->_cookie && stdout->_write)
-                return stdout->_write(r, stdout->_cookie, buf, len);
-//#else // pico-sdk
-
-#if defined(PICO_STDIO_UART) || defined(PICO_STDIO_USB) || defined(PICO_STDIO_SEMIHOST)
-            //SYS_DBG("(%s) fd=%d\n", __func__, fd);
+                return stdout->_write(r, stdout->_cookie, buf, len); // arduino 
+#if defined(BAREMETAL) && (defined(PICO_STDIO_UART) || defined(PICO_STDIO_USB) || defined(PICO_STDIO_SEMIHOST))
             extern int _write(int, char *, int);
             return _write(1, (char *)buf, len); // pico write to 1
 #endif
-//#endif
-
         }
         else
         {
@@ -130,7 +119,6 @@ _ssize_t _write_r(struct _reent *r, int fd, const void *buf, size_t len)
 #endif
         }
     }
-    //__errno_r(r) = (err < 0) ? -err : 0;
     errno = (err < 0) ? -err : 0;
     return err;
 }
@@ -142,18 +130,12 @@ _ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
     {
         if (fd == STDIN_FILENO)
         {
-
-//#ifdef ARDUINO
             if (stdin->_cookie && stdin->_read)
-                return stdin->_read(r, stdin->_cookie, buf, len);
-//#else // pico-sdk
-#if defined(PICO_STDIO_UART) || defined(PICO_STDIO_USB) || defined(PICO_STDIO_SEMIHOST)
-            //SYS_DBG("(%s) fd=%d\n", __func__, fd);
+                return stdin->_read(r, stdin->_cookie, buf, len); // arduino 
+#if defined(BAREMETAL) && (defined(PICO_STDIO_UART) || defined(PICO_STDIO_USB) || defined(PICO_STDIO_SEMIHOST))
             extern int _read(int, char *, int);
             return _read(0, buf, len); // pico read from 0
 #endif
-//#endif
-
         }
         else
         {
@@ -162,7 +144,6 @@ _ssize_t _read_r(struct _reent *r, int fd, void *buf, size_t len)
 #endif
         }
     }
-    //__errno_r(r) = (err < 0) ? -err : 0;
     errno = (err < 0) ? -err : 0;
     return err;
 }
@@ -212,6 +193,7 @@ int mkdir(const char *path, mode_t mode)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
+
 #include <dbg.h>
 
 /* Executed before main ( crt0.S ) */
@@ -238,7 +220,7 @@ void system_init(void)
     stderr->_cookie = NULL;
     stdin->_cookie = NULL;
 
-#if defined(ARDUINO) &&  !defined(BAREMETAL)
+#if defined(ARDUINO) && !defined(BAREMETAL)
 
     // build_flags = -D PICO_STDIO_SEMIHOSTING
     extern void semihosting_init(void);
