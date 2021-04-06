@@ -1,5 +1,5 @@
 {
-    "name": "arduino",   
+    "name": "wiring",   
     "platforms" : ["wizio-pico"], 
     "frameworks": ["baremetal"],
     "export": {
