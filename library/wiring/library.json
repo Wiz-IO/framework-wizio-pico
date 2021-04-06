@@ -1,0 +1,9 @@
+{
+    "name": "arduino",   
+    "platforms" : ["wizio-pico"], 
+    "frameworks": ["baremetal"],
+    "export": {
+        "exclude": [], 
+        "include": null
+    }
+}
