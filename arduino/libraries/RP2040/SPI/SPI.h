@@ -28,6 +28,9 @@
 #include "RingBuffer.h"
 #include "hardware/spi.h"
 
+#define DEBUG_SPI
+//::printf
+
 typedef enum
 {
     SPI_MODE0 = 0, // CPOL : 0  | CPHA : 0
@@ -92,19 +95,13 @@ public:
         _speed = 1000000;
     }
 
-    void begin(int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, int8_t ss = -1)
+    // before begin()
+    void setPins(int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, int8_t ss = -1)
     {
-        if (sck == -1 && miso == -1 && mosi == -1 && ss == -1)
-        {
-            return; // SELECT PINS ?
-        }
-        else
-        {
-            _sck = sck;
-            _miso = miso;
-            _mosi = mosi;
-            _ss = ss;
-        }
+        _sck = sck;
+        _miso = miso;
+        _mosi = mosi;
+        _ss = ss;
         gpio_set_function(_miso, GPIO_FUNC_SPI);
         gpio_set_function(_mosi, GPIO_FUNC_SPI);
         gpio_set_function(_sck, GPIO_FUNC_SPI);
@@ -114,7 +111,13 @@ public:
             gpio_set_dir(ss, GPIO_OUT);
             gpio_put(ss, 1);
         }
+        //DEBUG_SPI("[] %s() sck=%d, miso=%d, mosi=%d ss=%d\n", __func__, sck, miso, mosi, ss);
+    }
+
+    void begin(int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, int8_t ss = -1)
+    {
         spi_init(ctx, _speed); // settings.clock
+        //DEBUG_SPI("[] %s() ctx=%p, speed_hz=%lu\n", __func__, ctx, _speed);
     }
 
     void beginTransaction(SPISettings settings)
@@ -222,6 +225,10 @@ public:
 
     void setFrequency(uint16_t kHz)
     {
+        static uint16_t s = 0;
+        if (s == kHz)
+            return;
+        s = kHz;
         _speed = kHz * 1000;
         spi_set_baudrate(ctx, _speed);
     }
