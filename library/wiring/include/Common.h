@@ -163,9 +163,29 @@ void tone(uint8_t _pin, unsigned int frequency, unsigned long duration = 0);
 void noTone(uint8_t _pin);
 
 // WMath prototypes
-long random(long);
-long random(long, long);
+#include <stdlib.h>
+//long random(long);
+//long random(long, long);
 void randomSeed(unsigned long);
 long map(long, long, long, long, long);
+
+static inline long random(long howbig)
+{
+    if (howbig == 0)
+    {
+        return 0;
+    }
+    return random() % howbig;
+}
+
+static inline long random(long howsmall, long howbig)
+{
+    if (howsmall >= howbig)
+    {
+        return howsmall;
+    }
+    long diff = howbig - howsmall;
+    return random(diff) + howsmall;
+}
 
 #endif // __cplusplus
