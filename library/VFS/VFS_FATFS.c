@@ -22,8 +22,11 @@
 
 #pragma message "FATFS is not tested with SD card..."
 
-#define FFS_LOG(ERR, TXT) printf("[FFS] %s( %d ) %s\n", __func__, (int)ERR, (char *)TXT);
-#define FFS_ERR(ERR, TXT) printf("[ERROR] at line %d, %s( %d ) %s\n", __LINE__, __func__, (int)ERR, (char *)TXT);
+#define FFS_LOG(ERR, TXT)
+//printf("[FFS] %s( %d ) %s\n", __func__, (int)ERR, (char *)TXT);
+
+#define FFS_ERR(ERR, TXT)
+//printf("[ERROR] at line %d, %s( %d ) %s\n", __LINE__, __func__, (int)ERR, (char *)TXT);
 
 typedef struct fatfs_context_s
 {
@@ -146,7 +149,7 @@ static int s_fatfs_unmount(vfs_t *Fs)
 
 static void *s_fatfs_open(vfs_t *Fs, const char *path, int flags, int mode)
 {
-    //FFS_LOG(0, " ");
+    FFS_LOG(0, " ");
     FIL *file = (FIL *)calloc(1, sizeof(FIL));
     if (file)
     {
@@ -156,9 +159,7 @@ static void *s_fatfs_open(vfs_t *Fs, const char *path, int flags, int mode)
             FFS_ERR(errno, path);
             free(file);
             file = NULL;
-        }
-        else
-            errno = 0;
+        } // else errno = 0;
         MUTEX_UNLOCK(FATFS_FS_MUTEX);
     }
     else
@@ -171,7 +172,7 @@ static void *s_fatfs_open(vfs_t *Fs, const char *path, int flags, int mode)
 
 static int s_fatfs_close(vfs_file_t *File)
 {
-    //FFS_LOG(0, " ");
+    FFS_LOG(0, " ");
     MUTEX_LOCK(FATFS_MUTEX);
     FRESULT err = f_close(FATFS_FILE);
     free(FATFS_FILE);
@@ -181,7 +182,7 @@ static int s_fatfs_close(vfs_file_t *File)
 
 static size_t s_fatfs_write(vfs_file_t *File, const char *buf, size_t size)
 {
-    //FFS_LOG(0, " ");
+    FFS_LOG(0, " ");
     MUTEX_LOCK(FATFS_MUTEX);
     unsigned wr = 0;
     FRESULT err = f_write(FATFS_FILE, buf, size, &wr);
@@ -193,7 +194,7 @@ static size_t s_fatfs_write(vfs_file_t *File, const char *buf, size_t size)
 
 static size_t s_fatfs_read(vfs_file_t *File, char *buf, size_t size)
 {
-    //FFS_LOG(0, " ");
+    FFS_LOG(0, " ");
     MUTEX_LOCK(FATFS_MUTEX);
     unsigned rd = 0;
     FRESULT err = f_read(FATFS_FILE, buf, size, &rd);
@@ -205,7 +206,7 @@ static size_t s_fatfs_read(vfs_file_t *File, char *buf, size_t size)
 
 static _off_t s_fatfs_seek(vfs_file_t *File, _off_t offset, int mode)
 {
-    //FFS_LOG(0, " ");
+    FFS_LOG(0, " ");
     off_t new_pos;
     if (mode == SEEK_SET)
     {
@@ -251,22 +252,14 @@ static fatfs_context_t fatfs_ctx = {
     .pMutex = NULL,
 };
 
-#pragma GCC push_options
-#pragma GCC optimize("-O0")
-static void fatfs_pre_init(void)
-{
-    MUTEX_INIT(fatfs_ctx.pMutex);
-}
-PRE_INIT_FUNC(fatfs_pre_init);
-#pragma GCC pop_options
-#endif
+#endif // USE_FATFS
 
 int fatfs_init(void)
 {
     int err = -1;
 #ifdef USE_FATFS
+    MUTEX_INIT(fatfs_ctx.pMutex);
     err = vfs_mount(FATFS_LETTER, &fatfs_ctx);
-    printf("[FFS] %s( %d ) disk %s\n", __func__, err, FATFS_LETTER);
 #endif
     return err;
 }

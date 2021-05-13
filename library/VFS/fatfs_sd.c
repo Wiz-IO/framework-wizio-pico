@@ -25,7 +25,11 @@
 #ifdef USE_FATFS
 #include "VFS_FATFS.h"
 
-#define SD_DBG(x) //printf("    [SD] %s\n", x)
+#define SD_DBG(x)
+//printf("    [SD] %s\n", x)
+
+#define SD_PRINT_ERROR()
+//printf("[ERROR] %s() at line %d\n", __func__, __LINE__)
 
 static volatile DSTATUS FATFS_SD_Stat = STA_NOINIT;
 
@@ -62,9 +66,9 @@ static void init_spi(void)
 	gpio_set_function(FATFS_SPI_MISO, GPIO_FUNC_SPI);
 	gpio_set_function(FATFS_SPI_MOSI, GPIO_FUNC_SPI);
 	gpio_set_function(FATFS_SPI_SCK, GPIO_FUNC_SPI);
-	spi_set_format(FATFS_SPI, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_LSB_FIRST);
-	spi_init(FATFS_SPI, 1000000);
-	SD_DBG("init spi");
+	gpio_pull_up(FATFS_SPI_MISO);
+	spi_set_format(FATFS_SPI, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+	spi_init(FATFS_SPI, FATFS_SPI_BRG);
 }
 
 /* Receive multiple byte */
@@ -92,7 +96,6 @@ static void xmit_spi_multi(
 /*-----------------------------------------------------------------------*/
 /* Wait for card ready                                                   */
 /*-----------------------------------------------------------------------*/
-
 /* 1:Ready, 0:Timeout */
 static int wait_ready(
 	UINT wt /* Timeout [ms] */
@@ -103,27 +106,23 @@ static int wait_ready(
 	do
 	{
 		d = spi_send(FATFS_SPI, 0xFF);
-	} while (d != 0xFF && !best_effort_wfe_or_timeout(timeout_time)); /* Wait for card goes ready or timeout */
-	if (d == 0xFF)
+	} while (d != 0xFF && 0 < absolute_time_diff_us(get_absolute_time(), timeout_time));
+
+	if (d != 0xFF)
 	{
-		SD_DBG("wait_ready: OK");
+		SD_PRINT_ERROR();
 	}
-	else
-	{
-		SD_DBG("wait_ready: timeout");
-	}
+
 	return (d == 0xFF) ? 1 : 0;
 }
 
 /*-----------------------------------------------------------------------*/
 /* Deselect card and release SPI                                         */
 /*-----------------------------------------------------------------------*/
-
 static void deselect_card(void)
 {
 	FATFS_CS_HIGH;			   /* CS = H */
 	spi_send(FATFS_SPI, 0xFF); /* Dummy clock (force DO hi-z for multiple slave SPI) */
-	SD_DBG("deselect_card: ok");
 }
 
 /*-----------------------------------------------------------------------*/
@@ -134,13 +133,11 @@ static int select_card(void)
 {
 	FATFS_CS_LOW;
 	spi_send(FATFS_SPI, 0xFF); /* Dummy clock (force DO enabled) */
-
 	if (wait_ready(500))
 	{
-		SD_DBG("select_card: OK");
 		return 1; /* OK */
 	}
-	SD_DBG("select_card: no");
+	SD_PRINT_ERROR();
 	deselect_card();
 	return 0; /* Timeout */
 }
@@ -161,17 +158,19 @@ static int rcvr_datablock(
 		// Wait for DataStart token in timeout of 200ms
 		token = spi_send(FATFS_SPI, 0xFF);
 		// This loop will take a time. Insert rot_rdq() here for multitask envilonment.
-	} while ((token == 0xFF) && !best_effort_wfe_or_timeout(timeout_time));
+	} while ((token == 0xFF) && 0 < absolute_time_diff_us(get_absolute_time(), timeout_time));
+
 	if (token != 0xFE)
 	{
-		SD_DBG("rcvr_datablock: token != 0xFE");
+		SD_PRINT_ERROR();
 		return 0; // Function fails if invalid DataStart token or timeout
 	}
 
 	rcvr_spi_multi(buff, btr); // Store trailing data to the buffer
 	spi_send(FATFS_SPI, 0xFF);
 	spi_send(FATFS_SPI, 0xFF); // Discard CRC
-	return 1;				   // Function succeeded
+
+	return 1; // Function succeeded
 }
 
 /*-----------------------------------------------------------------------*/
@@ -186,15 +185,11 @@ static int xmit_datablock(
 )
 {
 	BYTE resp;
-
-	SD_DBG("xmit_datablock: inside");
-
 	if (!wait_ready(500))
 	{
-		SD_DBG("xmit_datablock: not ready");
+		SD_PRINT_ERROR();
 		return 0; /* Wait for card ready */
 	}
-	SD_DBG("xmit_datablock: ready");
 
 	spi_send(FATFS_SPI, token); /* Send token */
 	if (token != 0xFD)
@@ -205,7 +200,10 @@ static int xmit_datablock(
 
 		resp = spi_send(FATFS_SPI, 0xFF); /* Receive data resp */
 		if ((resp & 0x1F) != 0x05)		  /* Function fails if the data packet was not accepted */
+		{
+			SD_PRINT_ERROR();
 			return 0;
+		}
 	}
 	return 1;
 }
@@ -214,7 +212,6 @@ static int xmit_datablock(
 /*-----------------------------------------------------------------------*/
 /* Send a command packet to the MMC                                      */
 /*-----------------------------------------------------------------------*/
-
 /* Return value: R1 resp (bit7==1:Failed to send) */
 static BYTE send_cmd(
 	BYTE cmd, /* Command index */
@@ -222,13 +219,15 @@ static BYTE send_cmd(
 )
 {
 	BYTE n, res;
-
 	if (cmd & 0x80)
 	{ /* Send a CMD55 prior to ACMD<n> */
 		cmd &= 0x7F;
 		res = send_cmd(CMD55, 0);
 		if (res > 1)
+		{
+			SD_PRINT_ERROR();
 			return res;
+		}
 	}
 
 	/* Select the card and wait for ready except to stop multiple block read */
@@ -236,7 +235,10 @@ static BYTE send_cmd(
 	{
 		deselect_card();
 		if (!select_card())
+		{
+			SD_PRINT_ERROR();
 			return 0xFF;
+		}
 	}
 
 	/* Send command packet */
@@ -267,12 +269,16 @@ static BYTE send_cmd(
 	return res; /* Return received response */
 }
 
-void FATFS_InitPins(void)
+DSTATUS disk_initialize(BYTE pdrv)
 {
+	//SD_DBG(__func__);
+
+	int res;
+	BYTE n, cmd, ty, ocr[4];
+
 #if FATFS_CS_PIN < 0
 #warning sd card cs pin is not selected
 #else
-	SD_DBG("init cs pin");
 	gpio_set_function(FATFS_CS_PIN, GPIO_FUNC_XIP);
 	gpio_init(FATFS_CS_PIN);
 	gpio_set_dir(FATFS_CS_PIN, GPIO_OUT);
@@ -290,22 +296,17 @@ void FATFS_InitPins(void)
 	gpio_set_function(FATFS_WRITEPROTECT_PIN, GPIO_FUNC_XIP);
 	gpio_init(FATFS_WRITEPROTECT_PIN);
 #endif
-}
 
-DSTATUS disk_initialize(BYTE pdrv)
-{
-	SD_DBG(__func__);
-	BYTE n, cmd, ty, ocr[4];
-	FATFS_InitPins(); //Initialize CS pin
 	init_spi();
+
 	if (!sd_detect())
 	{
 		return STA_NODISK;
 	}
+
 	for (n = 10; n; n--)
-	{
 		spi_send(FATFS_SPI, 0xFF);
-	}
+
 	ty = 0;
 	if (send_cmd(CMD0, 0) == 1)
 	{
@@ -318,12 +319,16 @@ DSTATUS disk_initialize(BYTE pdrv)
 			{
 				ocr[n] = spi_send(FATFS_SPI, 0xFF); /* Get 32 bit return value of R7 resp */
 			}
-			if (ocr[2] == 0x01 && ocr[3] == 0xAA)
+
+			if (ocr[2] == 0x01 && ocr[3] == 0xAA) // 00, 00, 01, AA
 			{
 				/* Is the card supports vcc of 2.7-3.6V? */
-				while (!best_effort_wfe_or_timeout(timeout_time) && send_cmd(ACMD41, 1UL << 30))
-					; /* Wait for end of initialization with ACMD41(HCS) */
-				if (!best_effort_wfe_or_timeout(timeout_time) && send_cmd(CMD58, 0) == 0)
+				timeout_time = make_timeout_time_ms(1000 * 1000); /* Wait for end of initialization with ACMD41(HCS) */
+				while ((res = send_cmd(ACMD41, 1UL << 30)) && 0 < absolute_time_diff_us(get_absolute_time(), timeout_time))
+					;
+
+				// Get the card capacity CCS: CMD58
+				if ((res = send_cmd(CMD58, 0)) == 0)
 				{ /* Check CCS bit in the OCR */
 					for (n = 0; n < 4; n++)
 					{
@@ -347,9 +352,10 @@ DSTATUS disk_initialize(BYTE pdrv)
 				ty = CT_MMC;
 				cmd = CMD1; /* MMCv3 (CMD1(0)) */
 			}
-			while (!best_effort_wfe_or_timeout(timeout_time) && send_cmd(cmd, 0))
+			while (0 < absolute_time_diff_us(get_absolute_time(), timeout_time) && send_cmd(cmd, 0))
 				; /* Wait for end of initialization */
-			if (!best_effort_wfe_or_timeout(timeout_time) || send_cmd(CMD16, 512) != 0)
+
+			if (0 < absolute_time_diff_us(get_absolute_time(), timeout_time) || send_cmd(CMD16, 512) != 0)
 			{
 				/* Set block length: 512 */
 				ty = 0;
@@ -387,7 +393,8 @@ DSTATUS disk_initialize(BYTE pdrv)
 
 DSTATUS disk_status(BYTE pdrv)
 {
-	SD_DBG(__func__);
+	//SD_DBG(__func__);
+	
 	/* Check card detect pin if enabled */
 	if (!sd_detect())
 	{
@@ -418,9 +425,11 @@ DRESULT disk_read(
 	UINT count	  /* Number of sectors to read (1..128) */
 )
 {
-	SD_DBG(__func__);
+	//SD_DBG(__func__);
+
 	if (!sd_detect() || (FATFS_SD_Stat & STA_NOINIT))
 	{
+		SD_PRINT_ERROR();
 		return RES_NOTRDY;
 	}
 
@@ -430,10 +439,15 @@ DRESULT disk_read(
 	}
 
 	if (count == 1)
-	{									   /* Single sector read */
-		if ((send_cmd(CMD17, sector) == 0) /* READ_SINGLE_BLOCK */
-			&& rcvr_datablock(buff, 512))
+	{ /* Single sector read */
+		if ((send_cmd(CMD17, sector) == 0) && rcvr_datablock(buff, 512))
+		{
 			count = 0;
+		}
+		else
+		{
+			SD_PRINT_ERROR();
+		}
 	}
 	else
 	{
@@ -445,6 +459,7 @@ DRESULT disk_read(
 			{
 				if (!rcvr_datablock(buff, 512))
 				{
+					SD_PRINT_ERROR();
 					break;
 				}
 				buff += 512;
@@ -469,22 +484,29 @@ DRESULT disk_write(
 	UINT count		  /* Number of sectors to write (1..128) */
 )
 {
-	SD_DBG(__func__);
+	//SD_DBG(__func__);
+
 	if (!sd_detect())
 	{
+		SD_PRINT_ERROR();
 		return RES_ERROR;
 	}
+
 	if (!sd_enabled())
 	{
-		SD_DBG("disk_write: Write protected!!! \n---------------------------------------------");
+		SD_PRINT_ERROR(); // Write protected
 		return RES_WRPRT;
 	}
+
 	if (FATFS_SD_Stat & STA_NOINIT)
 	{
+		SD_PRINT_ERROR();
 		return RES_NOTRDY; /* Check drive status */
 	}
+
 	if (FATFS_SD_Stat & STA_PROTECT)
 	{
+		SD_PRINT_ERROR();
 		return RES_WRPRT; /* Check write protect */
 	}
 
@@ -496,9 +518,14 @@ DRESULT disk_write(
 	if (count == 1)
 	{
 		/* Single sector write */
-		if ((send_cmd(CMD24, sector) == 0) /* WRITE_BLOCK */
-			&& xmit_datablock(buff, 0xFE))
+		if ((send_cmd(CMD24, sector) == 0) && xmit_datablock(buff, 0xFE))
+		{
 			count = 0;
+		}
+		else
+		{
+			SD_PRINT_ERROR();
+		}
 	}
 	else
 	{
@@ -512,6 +539,7 @@ DRESULT disk_write(
 			{
 				if (!xmit_datablock(buff, 0xFC))
 				{
+					SD_PRINT_ERROR();
 					break;
 				}
 				buff += 512;
@@ -523,6 +551,7 @@ DRESULT disk_write(
 			}
 		}
 	}
+
 	deselect_card();
 
 	return count ? RES_ERROR : RES_OK; /* Return result */
@@ -540,17 +569,21 @@ DRESULT disk_ioctl(
 	void *buff /* Buffer to send/receive control data */
 )
 {
-	SD_DBG(__func__);
+	//SD_DBG(__func__);
+
 	DRESULT res;
 	BYTE n, csd[16];
 	DWORD *dp, st, ed, csize;
 
 	if (FATFS_SD_Stat & STA_NOINIT)
 	{
+		SD_PRINT_ERROR();
 		return RES_NOTRDY; /* Check if drive is ready */
 	}
+
 	if (!sd_detect())
 	{
+		SD_PRINT_ERROR();
 		return RES_NOTRDY;
 	}
 
@@ -640,6 +673,7 @@ DRESULT disk_ioctl(
 		break;
 
 	default:
+		SD_PRINT_ERROR();
 		res = RES_PARERR;
 	}
 
@@ -653,7 +687,8 @@ DRESULT disk_ioctl(
 //Implement RTC get time here if you need it
 DWORD get_fattime(void)
 {
-	SD_DBG(__func__);
+	//SD_DBG(__func__);
+
 	return ((DWORD)(2021 - 1980) << 25) // Year 2014
 		   | ((DWORD)7 << 21)			// Month 7
 		   | ((DWORD)10 << 16)			// Mday 10
