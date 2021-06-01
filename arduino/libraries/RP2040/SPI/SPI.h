@@ -21,15 +21,11 @@
 
 #ifdef __cplusplus
 
-#include "interface.h"
-#include "constants.h"
+//#include "Common.h"
 #include "Stream.h"
-#include "variant.h"
 #include "RingBuffer.h"
-#include "hardware/spi.h"
-
-#define DEBUG_SPI
-//::printf
+#include <hardware/spi.h>
+#include <hardware/gpio.h>
 
 typedef enum
 {
@@ -44,14 +40,14 @@ class SPISettings
 public:
     SPISettings(uint32_t clockFrequency, uint8_t bitOrder, uint8_t dataMode)
     {
-        clock = clockFrequency;
+        clock = clockFrequency; // Hz
         order = bitOrder;
         mode = dataMode;
     }
 
     SPISettings()
     {
-        clock = 1000; // kHz
+        clock = 1000000; // Hz
         order = MSBFIRST;
         mode = SPI_MODE0;
     }
@@ -63,110 +59,100 @@ private:
     friend class SPIClass;
 };
 
-#define SPI_SS(L)                  \
-    if (_ss > -1)                  \
-    {                              \
-        asm volatile("nop\n nop"); \
-        gpio_put(_ss, L);          \
-        asm volatile("nop\n nop"); \
-    }
-
 class SPIClass
 {
 private:
-    spi_inst_t *ctx;
-    int _sck, _miso, _mosi, _ss;
-    int _clk_polarity;
-    int _clk_format;
-    int _bit_order;
-    int _data_bits;
-    int _mode;
+    spi_inst_t *spi;
+    int _cs;
     uint32_t _brg_hz;
 
-    void init()
+    uint32_t _clk_polarity;
+    uint32_t _clk_format;
+    uint32_t _bit_order;
+    uint32_t _data_bits;
+    uint32_t _mode;
+
+    void init_default()
     {
-        _brg_hz = 4000000;
-        _clk_polarity = 0;          // cpol
-        _clk_format = 0;            // cpha
-        _bit_order = SPI_LSB_FIRST; // LSBFIRST = 0
-        _data_bits = 8;             // 4..16
-        _mode = 0;
-        _miso = -1;
-        _mosi = -1;
-        _sck = -1;
-        _ss = -1;
+        _mode = 0;             //
+        _clk_polarity = 0;     // cpol
+        _clk_format = 0;       // cpha
+        _bit_order = MSBFIRST; // only 1
+        _data_bits = 8;        // 4..16
+        _brg_hz = 1000000;     // max 31 250 000
+        _cs = -1;
+    }
+
+    inline uint8_t reverseByte(uint8_t b)
+    {
+        b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+        b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+        b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+        return b;
     }
 
 public:
-    SPIClass(uint8_t spi)
+    SPIClass(uint8_t num)
     {
-        spi ? ctx = spi1 : spi0; // spi0, has two identical SPI
-        init();
+        num ? spi = spi1 : spi0;
+        init_default();
     }
 
-    SPIClass(spi_inst_t *port)
+    SPIClass(spi_inst_t *inst)
     {
-        ctx = port; // spi0, has two identical SPI
-        init();
+        spi = inst;
+        init_default();
     }
 
-    // before begin()
-    void setPins(int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, int8_t ss = -1)
+    void setPins(int8_t sck, int8_t miso, int8_t mosi, int8_t ss = -1)
     {
-        _sck = sck;
-        _miso = miso;
-        _mosi = mosi;
-        _ss = ss;
-        gpio_set_function(_miso, GPIO_FUNC_SPI);
-        gpio_set_function(_mosi, GPIO_FUNC_SPI);
-        gpio_set_function(_sck, GPIO_FUNC_SPI);
-        if (_ss > -1)
+        if (miso > -1)
+            gpio_set_function(miso, GPIO_FUNC_SPI);
+        if (mosi > -1)
+            gpio_set_function(mosi, GPIO_FUNC_SPI);
+        if (sck > -1)
+            gpio_set_function(sck, GPIO_FUNC_SPI);
+        if (ss > -1)
         {
             gpio_init(ss);
             gpio_set_dir(ss, GPIO_OUT);
             gpio_put(ss, 1);
+            _cs = ss;
         }
     }
 
     void begin(int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, int8_t ss = -1)
     {
-        spi_init(ctx, _brg_hz); // settings.clock
-    }
-
-    void beginTransaction(SPISettings settings)
-    {
-        setFrequency(settings.clock);
-        setDataMode(settings.mode);
-        setBitOrder(settings.order);
-        spi_set_format(ctx, _data_bits, (spi_cpol_t)_clk_polarity, (spi_cpha_t)_clk_format, (spi_order_t)_bit_order);
+        setPins(sck, miso, mosi, ss);
+        spi_init(spi, _brg_hz);
     }
 
     void end()
     {
-#if 0
-        if (_ss > -1)
-            gpio_set_function(_ss, GPIO_FUNC_XIP);
-        gpio_set_function(_sck, GPIO_FUNC_XIP);
-        gpio_set_function(_miso, GPIO_FUNC_XIP);
-        gpio_set_function(_mosi, GPIO_FUNC_XIP);
-        _miso = -1;
-        _mosi = -1;
-        _sck = -1;
-        _ss = -1;
-#endif
-        spi_deinit(ctx);
+        spi_deinit(spi);
     }
 
-    uint8_t transfer(uint8_t data)
+    uint8_t transfer(uint8_t tx)
     {
         uint8_t rx = 0;
-        SPI_SS(0);
-        spi_write_read_blocking(ctx, &data, &rx, 1); // Returns: Number of bytes written/read
-        SPI_SS(1);
-        return rx; // Returns the received data
+        if (_cs > -1)
+        {
+            gpio_put(_cs, 0);
+            //asm volatile("nop \n nop"); // NOP?
+        }
+
+        if (_bit_order == LSBFIRST)
+            tx = reverseByte(tx);
+
+        spi_write_read_blocking(spi, &tx, &rx, 1);
+
+        if (_cs > -1)
+            gpio_put(_cs, 1);
+
+        return (_bit_order == LSBFIRST) ? reverseByte(rx) : rx;
     }
 
-    uint16_t transfer16(uint16_t data)
+    uint16_t transfer(uint16_t data)
     {
         union
         {
@@ -178,7 +164,7 @@ public:
             };
         } t;
         t.val = data;
-        if (_bit_order == SPI_LSB_FIRST)
+        if (_bit_order == LSBFIRST)
         {
             t.lsb = transfer(t.lsb);
             t.msb = transfer(t.msb);
@@ -193,88 +179,17 @@ public:
 
     int transfer(uint8_t *buf, size_t count)
     {
-        SPI_SS(0);
-        int res = spi_write_read_blocking(ctx, buf, buf, count);
-        SPI_SS(1);
-        return res;
+        return spi_write_read_blocking(spi, buf, buf, count); // MSB
     }
 
-    void write(uint8_t data)
-    {
-        SPI_SS(0);
-        spi_write_blocking(ctx, &data, 1);
-        SPI_SS(1);
-    }
-
-    void write(uint8_t *buf, size_t count)
-    {
-        SPI_SS(0);
-        spi_write_blocking(ctx, buf, count);
-        SPI_SS(1);
-    }
-
-    void write16(uint16_t data)
-    {
-        SPI_SS(0);
-        spi_write16_blocking(ctx, &data, 1);
-        SPI_SS(1);
-    }
+    void write(uint8_t *buf, size_t count) { transfer(buf, count); }
 
     void write(uint16_t *buf, size_t count)
     {
-        uint8_t backup = _data_bits;
-        spi_set_format(ctx, 16, (spi_cpol_t)_clk_polarity, (spi_cpha_t)_clk_format, (spi_order_t)_bit_order);
-
-        SPI_SS(0);
-        spi_write16_blocking(ctx, buf, count);
-        SPI_SS(1);
-
-        _data_bits = backup;
-        spi_set_format(ctx, _data_bits, (spi_cpol_t)_clk_polarity, (spi_cpha_t)_clk_format, (spi_order_t)_bit_order);
-    }
-
-    void repeat(uint32_t data, size_t len)
-    {
-        SPI_SS(0);
-        while (len)
-        {
-            if (spi_is_writable(ctx))
-            {
-                ((spi_hw_t *)ctx)->dr = data;
-                len--;
-            }
-            else
-            {
-                tight_loop_contents();
-            }
-        }
-        while (spi_is_readable(ctx))
-            (void)spi_get_hw(ctx)->dr;
-        while (spi_get_hw(ctx)->sr & SPI_SSPSR_BSY_BITS)
-            tight_loop_contents();
-        while (spi_is_readable(ctx))
-            (void)spi_get_hw(ctx)->dr;
-        spi_get_hw(ctx)->icr = SPI_SSPICR_RORIC_BITS;
-        SPI_SS(1);
-    }
-
-    void repeat(uint16_t data, size_t len)
-    {
-        uint8_t backup = _data_bits;
-        spi_set_format(ctx, 16, (spi_cpol_t)_clk_polarity, (spi_cpha_t)_clk_format, (spi_order_t)_bit_order);
-        repeat((uint32_t)data, len);
-        _data_bits = backup;
-        spi_set_format(ctx, _data_bits, (spi_cpol_t)_clk_polarity, (spi_cpha_t)_clk_format, (spi_order_t)_bit_order);
-    }
-
-    void setDataMode(uint8_t mode)
-    {
-        if (_mode != mode)
-        {
-            _mode = mode;
-            _clk_polarity = mode >> 1;
-            _clk_format = mode & 1;
-        }
+        //LSBFIRST
+        spi_set_format(spi, 16, (spi_cpol_t)_clk_polarity, (spi_cpha_t)_clk_format, (spi_order_t)_bit_order);
+        spi_write16_blocking(spi, buf, count);
+        spi_set_format(spi, _data_bits, (spi_cpol_t)_clk_polarity, (spi_cpha_t)_clk_format, (spi_order_t)_bit_order);
     }
 
     void setFrequency(uint32_t Hz)
@@ -282,8 +197,17 @@ public:
         if (_brg_hz != Hz)
         {
             _brg_hz = Hz;
-            //::printf("[SPI] %lu\n", Hz);
-            spi_set_baudrate(ctx, Hz);
+            spi_set_baudrate(spi, Hz);
+        }
+    }
+
+    void setDataMode(uint8_t mode)
+    {
+        if (_mode != mode)
+        {
+            _mode = mode;
+            _clk_format = (bool)(mode & 1);
+            _clk_polarity = (bool)(mode & 2);
         }
     }
 
@@ -295,9 +219,18 @@ public:
         }
     }
 
+    void beginTransaction(SPISettings settings)
+    {
+        setFrequency(settings.clock);
+        setDataMode(settings.mode);
+        setBitOrder(settings.order);
+        spi_set_format(spi, _data_bits, (spi_cpol_t)_clk_polarity, (spi_cpha_t)_clk_format, (spi_order_t)_bit_order);
+    }
+
+    void endTransaction(void) {}
+
     uint32_t getClockDivider() { return 0; }
     void setClockDivider(uint8_t div) {}
-    void endTransaction(void) {}
     void usingInterrupt(int interruptNumber) {}
     void notUsingInterrupt(int interruptNumber) {}
     void attachInterrupt(){};
