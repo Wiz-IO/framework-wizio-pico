@@ -15,8 +15,8 @@
 #define _PICO_VERSION_H
 
 #define PICO_SDK_VERSION_MAJOR      1
-#define PICO_SDK_VERSION_MINOR      1
-#define PICO_SDK_VERSION_REVISION   2
+#define PICO_SDK_VERSION_MINOR      2
+#define PICO_SDK_VERSION_REVISION   0
 #define PICO_SDK_VERSION_STRING     "1.1.2.WizIO"
 
 #endif

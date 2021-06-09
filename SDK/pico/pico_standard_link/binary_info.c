@@ -8,7 +8,8 @@
 #include "pico/binary_info.h"
 
 #if !PICO_NO_FLASH
-//#include "boot_stage2/config.h" // WizIO ... not need here
+/* WizIO: not need here */
+//#include "boot_stage2/config.h"
 #endif
 
 // Note we put at most 4 pieces of binary info in the reset section because that's how much spare space we had
