@@ -83,7 +83,7 @@ __check_nan_d2:
 
 .macro table_tail_call SF_TABLE_OFFSET
     push {r3, r4}
-#if PICO_DOUBLE_SUPPORT_ROM_V1
+#if PICO_DOUBLE_SUPPORT_ROM_V1 && PICO_RP2040_B0_SUPPORTED
 #ifndef NDEBUG
     movs r3, #0
     mov ip, r3
@@ -99,12 +99,12 @@ __check_nan_d2:
     push {r3, r4}
     ldr r3, =sd_table
     ldr r3, [r3, #\SF_TABLE_OFFSET]
-#if PICO_DOUBLE_SUPPORT_ROM_V1
+#if PICO_DOUBLE_SUPPORT_ROM_V1 && PICO_RP2040_B0_SUPPORTED
     mov ip, pc
 #endif
     str r3, [sp, #4]
     pop {r3, pc}
-#if PICO_DOUBLE_SUPPORT_ROM_V1
+#if PICO_DOUBLE_SUPPORT_ROM_V1 && PICO_RP2040_B0_SUPPORTED
 .byte \SF_TABLE_OFFSET, 0xdf
 .word \shim
 #endif
@@ -290,7 +290,7 @@ wrapper_func __aeabi_cdcmple
 wrapper_func __aeabi_cdcmpeq
  push {r0-r7,r14}
 __aeabi_dfcmple_guts:
- ldr r7,=#0x7ff                @ flush NaNs and denormals
+ ldr r7,=0x7ff                @ flush NaNs and denormals
  lsls r4,r1,#1
  lsrs r4,#21
  beq 1f
@@ -450,7 +450,7 @@ wrapper_func __aeabi_i2d
     lsls r2, r4
     lsls r0, r2, #20
     lsrs r2, #12
-    ldr r1,=#1055
+    ldr r1,=1055
     subs r1, r4
     lsls r1, #20
     orrs r1, r3
@@ -552,7 +552,7 @@ regular_func double2int64_z
     cmp r1, #0
     bmi 1f
     movs r2, #0
-    rsbs r0, #0
+    negs r0, r0
     sbcs r2, r1
     mov r1, r2
     pop {pc}
@@ -733,7 +733,7 @@ sincos_shim_bootstrap:
     push {r2, r3, r4}
     movs r3, #0x13
     ldrb r3, [r3]
-#if PICO_DOUBLE_SUPPORT_ROM_V1
+#if PICO_DOUBLE_SUPPORT_ROM_V1 && PICO_RP2040_B0_SUPPORTED
     cmp r3, #1
     bne 1f
     ldr r3, =dsincos_shim

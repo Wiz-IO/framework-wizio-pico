@@ -10,6 +10,7 @@
 #include "pico.h"
 #include "hardware/structs/sio.h"
 #include "hardware/structs/padsbank0.h"
+#include "hardware/structs/iobank0.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -178,6 +179,12 @@ enum gpio_drive_strength {
  */
 void gpio_set_function(uint gpio, enum gpio_function fn);
 
+/*! \brief Determine current GPIO function
+ *  \ingroup hardware_gpio
+ *
+ * \param gpio GPIO number
+ * \return Which GPIO function is currently selected from list \ref gpio_function
+ */
 enum gpio_function gpio_get_function(uint gpio);
 
 /*! \brief Select up and down pulls on specific GPIO
@@ -401,17 +408,24 @@ void gpio_acknowledge_irq(uint gpio, uint32_t events);
 /*! \brief Initialise a GPIO for (enabled I/O and set func to GPIO_FUNC_SIO)
  *  \ingroup hardware_gpio
  *
- * Clear the output enable (i.e. set to input)
+ * Clear the output enable (i.e. set to input).
  * Clear any output value.
  *
  * \param gpio GPIO number
  */
 void gpio_init(uint gpio);
 
+/*! \brief Resets a GPIO back to the NULL function, i.e. disables it.
+ *  \ingroup hardware_gpio
+ *
+ * \param gpio GPIO number
+ */
+void gpio_deinit(uint gpio);
+
 /*! \brief Initialise multiple GPIOs (enabled I/O and set func to GPIO_FUNC_SIO)
  *  \ingroup hardware_gpio
  *
- * Clear the output enable (i.e. set to input)
+ * Clear the output enable (i.e. set to input).
  * Clear any output value.
  *
  * \param gpio_mask Mask with 1 bit per GPIO number to initialize

@@ -16,17 +16,9 @@
 #define PIMORONI_PICOLIPO_4MB
 
 // --- BOARD SPECIFIC ---
-#ifndef PICOLIPO_USER_SW_PIN
 #define PICOLIPO_USER_SW_PIN 23
-#endif
-
-#ifndef PICOLIPO_VBUS_DETECT_PIN
 #define PICOLIPO_VBUS_DETECT_PIN 24
-#endif
-
-#ifndef PICOLIPO_BAT_SENSE_PIN
 #define PICOLIPO_BAT_SENSE_PIN 29
-#endif
 
 // --- UART ---
 #ifndef PICO_DEFAULT_UART
@@ -85,12 +77,8 @@
 #endif
 
 // All boards have B1 RP2040
-#ifndef PICO_FLOAT_SUPPORT_ROM_V1
-#define PICO_FLOAT_SUPPORT_ROM_V1 0
-#endif
-
-#ifndef PICO_DOUBLE_SUPPORT_ROM_V1
-#define PICO_DOUBLE_SUPPORT_ROM_V1 0
+#ifndef PICO_RP2040_B0_SUPPORTED
+#define PICO_RP2040_B0_SUPPORTED 0
 #endif
 
 #endif

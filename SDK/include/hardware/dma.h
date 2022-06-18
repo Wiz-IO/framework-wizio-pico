@@ -54,6 +54,10 @@ static inline void check_dma_channel_param(__unused uint channel) {
 #endif
 }
 
+static inline void check_dma_timer_param(__unused uint timer_num) {
+    valid_params_if(DMA, timer_num < NUM_DMA_TIMERS);
+}
+
 inline static dma_channel_hw_t *dma_channel_hw_addr(uint channel) {
     check_dma_channel_param(channel);
     return &dma_hw->ch[channel];
@@ -469,6 +473,32 @@ static inline void dma_channel_start(uint channel) {
  *
  * Function will only return once the DMA has stopped.
  *
+ * Note that due to errata RP2040-E13, aborting a channel which has transfers
+ * in-flight (i.e. an individual read has taken place but the corresponding write has not), the ABORT
+ * status bit will clear prematurely, and subsequently the in-flight
+ * transfers will trigger a completion interrupt once they complete.
+ *
+ * The effect of this is that you \em may see a spurious completion interrupt
+ * on the channel as a result of calling this method.
+ *
+ * The calling code should be sure to ignore a completion IRQ as a result of this method. This may
+ * not require any additional work, as aborting a channel which may be about to complete, when you have a completion
+ * IRQ handler registered, is inherently race-prone, and so code is likely needed to disambiguate the two occurrences.
+ *
+ * If that is not the case, but you do have a channel completion IRQ handler registered, you can simply
+ * disable/re-enable the IRQ around the call to this method as shown by this code fragment (using DMA IRQ0).
+ *
+ * \code
+ *  // disable the channel on IRQ0
+ *  dma_channel_set_irq0_enabled(channel, false);
+ *  // abort the channel
+ *  dma_channel_abort(channel);
+ *  // clear the spurious IRQ (if there was one)
+ *  dma_channel_acknowledge_irq0(channel);
+ *  // re-enable the channel on IRQ0
+ *  dma_channel_set_irq0_enabled(channel, true);
+ *\endcode
+ *
  * \param channel DMA channel
  */
 static inline void dma_channel_abort(uint channel) {
@@ -476,7 +506,7 @@ static inline void dma_channel_abort(uint channel) {
     dma_hw->abort = 1u << channel;
     // Bit will go 0 once channel has reached safe state
     // (i.e. any in-flight transfers have retired)
-    while (dma_hw->abort & (1ul << channel)) tight_loop_contents();
+    while (dma_hw->ch[channel].ctrl_trig & DMA_CH0_CTRL_TRIG_BUSY_BITS) tight_loop_contents();
 }
 
 /*! \brief  Enable single DMA channel's interrupt via DMA_IRQ_0
@@ -713,6 +743,71 @@ inline static void dma_sniffer_set_byte_swap_enabled(bool swap) {
  */
 inline static void dma_sniffer_disable(void) {
     dma_hw->sniff_ctrl = 0;
+}
+
+/*! \brief Mark a dma timer as used
+ *  \ingroup hardware_dma
+ *
+ * Method for cooperative claiming of hardware. Will cause a panic if the timer
+ * is already claimed. Use of this method by libraries detects accidental
+ * configurations that would fail in unpredictable ways.
+ *
+ * \param timer the dma timer
+ */
+void dma_timer_claim(uint timer);
+
+/*! \brief Mark a dma timer as no longer used
+ *  \ingroup hardware_dma
+ *
+ * Method for cooperative claiming of hardware.
+ *
+ * \param timer the dma timer to release
+ */
+void dma_timer_unclaim(uint timer);
+
+/*! \brief Claim a free dma timer
+ *  \ingroup hardware_dma
+ *
+ * \param required if true the function will panic if none are available
+ * \return the dma timer number or -1 if required was false, and none were free
+ */
+int dma_claim_unused_timer(bool required);
+
+/*! \brief Determine if a dma timer is claimed
+ *  \ingroup hardware_dma
+ *
+ * \param timer the dma timer
+ * \return true if the timer is claimed, false otherwise
+ * \see dma_timer_claim
+ */
+bool dma_timer_is_claimed(uint timer);
+
+/*! \brief Set the divider for the given DMA timer
+ *  \ingroup hardware_dma
+ *
+ * The timer will run at the system_clock_freq * numerator / denominator, so this is the speed
+ * that data elements will be transferred at via a DMA channel using this timer as a DREQ
+ *
+ * \param timer the dma timer
+ * \param numerator the fraction's numerator
+ * \param denominator the fraction's denominator
+ */
+static inline void dma_timer_set_fraction(uint timer, uint16_t numerator, uint16_t denominator) {
+    check_dma_timer_param(timer);
+    dma_hw->timer[timer] = (((uint32_t)numerator) << DMA_TIMER0_X_LSB) | (((uint32_t)denominator) << DMA_TIMER0_Y_LSB);
+}
+
+/*! \brief Return the DREQ number for a given DMA timer
+ *  \ingroup hardware_dma
+ *
+ * \param timer_num DMA timer number 0-3
+ */
+static inline uint dma_get_timer_dreq(uint timer_num) {
+    static_assert(DREQ_DMA_TIMER1 == DREQ_DMA_TIMER0 + 1, "");
+    static_assert(DREQ_DMA_TIMER2 == DREQ_DMA_TIMER0 + 2, "");
+    static_assert(DREQ_DMA_TIMER3 == DREQ_DMA_TIMER0 + 3, "");
+    check_dma_timer_param(timer_num);
+    return DREQ_DMA_TIMER0 + timer_num;
 }
 
 #ifndef NDEBUG

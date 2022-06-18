@@ -80,7 +80,7 @@ __check_nan_f2:
 #endif
 
 .macro table_tail_call SF_TABLE_OFFSET
-#if PICO_FLOAT_SUPPORT_ROM_V1
+#if PICO_FLOAT_SUPPORT_ROM_V1 && PICO_RP2040_B0_SUPPORTED
 #ifndef NDEBUG
     movs r3, #0
     mov ip, r3
@@ -94,11 +94,11 @@ __check_nan_f2:
 .macro shimmable_table_tail_call SF_TABLE_OFFSET shim
     ldr r3, =sf_table
     ldr r3, [r3, #\SF_TABLE_OFFSET]
-#if PICO_FLOAT_SUPPORT_ROM_V1
+#if PICO_FLOAT_SUPPORT_ROM_V1 && PICO_RP2040_B0_SUPPORTED
     mov ip, pc
 #endif
     bx r3
-#if PICO_FLOAT_SUPPORT_ROM_V1
+#if PICO_FLOAT_SUPPORT_ROM_V1 && PICO_RP2040_B0_SUPPORTED
 .byte \SF_TABLE_OFFSET, 0xdf
 .word \shim
 #endif
@@ -378,7 +378,7 @@ wrapper_func __aeabi_i2f
         lsrs r1, r0, #31
         lsls r1, #31
         bpl 1f
-        rsbs r0, #0
+        negs r0, r0
 1:
         cmp r0, #0
         beq 7f
@@ -392,7 +392,7 @@ __aeabi_i2f_main:
         pop {r1, r2}
         lsls r1, r0
         subs r0, #158
-        rsbs r0, #0
+        negs r0, r0
 
         adds r1,#0x80  @ rounding
         bcs 5f         @ tripped carry? then have leading 1 in C as required (and result is even so can ignore sticky bits)
@@ -459,7 +459,7 @@ regular_func float2int_z
     bl __aeabi_f2uiz
     cmp r0, #0
     bmi 1f
-    rsbs r0, #0
+    negs r0, r0
     pop {pc}
 1:
     movs r0, #128
@@ -534,7 +534,7 @@ regular_func float2int64_z
     cmp r1, #0
     bmi 1f
     movs r2, #0
-    rsbs r0, #0
+    negs r0, r0
     sbcs r2, r1
     mov r1, r2
     pop {pc}
@@ -584,13 +584,13 @@ wrapper_func __aeabi_f2d
 
 float_wrapper_section srqtf
 wrapper_func_f1 sqrtf
-#if PICO_FLOAT_SUPPORT_ROM_V1
+#if PICO_FLOAT_SUPPORT_ROM_V1 && PICO_RP2040_B0_SUPPORTED
     // check for negative
     asrs r1, r0, #23
     bmi 1f
 #endif
     table_tail_call SF_TABLE_FSQRT
-#if PICO_FLOAT_SUPPORT_ROM_V1
+#if PICO_FLOAT_SUPPORT_ROM_V1 && PICO_RP2040_B0_SUPPORTED
 1:
     mvns r0, r1
     cmp r0, #255

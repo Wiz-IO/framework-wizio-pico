@@ -14,47 +14,22 @@
 
 // For board detection
 #define PIMORONI_TINY2040
+#define PIMORONI_TINY2040_8MB
 
 // --- BOARD SPECIFIC ---
-#ifndef TINY2040_LED_R_PIN
 #define TINY2040_LED_R_PIN 18
-#endif
-
-#ifndef TINY2040_LED_G_PIN
 #define TINY2040_LED_G_PIN 19
-#endif
-
-#ifndef TINY2040_LED_B_PIN
 #define TINY2040_LED_B_PIN 20
-#endif
 
-#ifndef TINY2040_USER_SW_PIN
 #define TINY2040_USER_SW_PIN 23
-#endif
 
-#ifndef TINY2040_A0_PIN
 #define TINY2040_A0_PIN 26
-#endif
-
-#ifndef TINY2040_A1_PIN
 #define TINY2040_A1_PIN 27
-#endif
-
-#ifndef TINY2040_A2_PIN
 #define TINY2040_A2_PIN 28
-#endif
-
-#ifndef TINY2040_A3_PIN
 #define TINY2040_A3_PIN 29
-#endif
 
-#ifndef TINY2040_NUM_IO_PINS
 #define TINY2040_NUM_IO_PINS 8
-#endif
-
-#ifndef TINY2040_NUM_ADC_PINS
 #define TINY2040_NUM_ADC_PINS 4
-#endif
 
 // --- UART ---
 #ifndef PICO_DEFAULT_UART
@@ -120,12 +95,8 @@
 #endif
 
 // All boards have B1 RP2040
-#ifndef PICO_FLOAT_SUPPORT_ROM_V1
-#define PICO_FLOAT_SUPPORT_ROM_V1 0
-#endif
-
-#ifndef PICO_DOUBLE_SUPPORT_ROM_V1
-#define PICO_DOUBLE_SUPPORT_ROM_V1 0
+#ifndef PICO_RP2040_B0_SUPPORTED
+#define PICO_RP2040_B0_SUPPORTED 0
 #endif
 
 #endif
