@@ -39,12 +39,10 @@
 //--------------------------------------------------------------------+
 // TASK API
 //--------------------------------------------------------------------+
-#ifndef RP2040_USB_HOST_MODE
 static inline void osal_task_delay(uint32_t msec)
 {
-    sleep_ms(msec);
+  sleep_ms(msec);
 }
-#endif
 
 //--------------------------------------------------------------------+
 // Binary Semaphore API
@@ -59,6 +57,7 @@ static inline osal_semaphore_t osal_semaphore_create(osal_semaphore_def_t* semde
 
 static inline bool osal_semaphore_post(osal_semaphore_t sem_hdl, bool in_isr)
 {
+  (void) in_isr;
   sem_release(sem_hdl);
   return true;
 }
@@ -115,15 +114,10 @@ typedef struct
 typedef osal_queue_def_t* osal_queue_t;
 
 // role device/host is used by OS NONE for mutex (disable usb isr) only
-#define OSAL_QUEUE_DEF(_role, _name, _depth, _type) \
-  uint8_t _name##_buf[_depth*sizeof(_type)];        \
-  osal_queue_def_t _name = {                        \
-    .ff = {                                         \
-      .buffer       = _name##_buf,                  \
-      .depth        = _depth,                       \
-      .item_size    = sizeof(_type),                \
-      .overwritable = false,                        \
-    }\
+#define OSAL_QUEUE_DEF(_role, _name, _depth, _type)       \
+  uint8_t _name##_buf[_depth*sizeof(_type)];              \
+  osal_queue_def_t _name = {                              \
+    .ff = TU_FIFO_INIT(_name##_buf, _depth, _type, false) \
   }
 
 // lock queue by disable USB interrupt
@@ -150,7 +144,7 @@ static inline bool osal_queue_receive(osal_queue_t qhdl, void* data)
   // TODO: revisit... docs say that mutexes are never used from IRQ context,
   //  however osal_queue_recieve may be. therefore my assumption is that
   //  the fifo mutex is not populated for queues used from an IRQ context
-  assert(!qhdl->ff.mutex);
+  //assert(!qhdl->ff.mutex);
 
   _osal_q_lock(qhdl);
   bool success = tu_fifo_read(&qhdl->ff, data);
@@ -164,7 +158,8 @@ static inline bool osal_queue_send(osal_queue_t qhdl, void const * data, bool in
   // TODO: revisit... docs say that mutexes are never used from IRQ context,
   //  however osal_queue_recieve may be. therefore my assumption is that
   //  the fifo mutex is not populated for queues used from an IRQ context
-  assert(!qhdl->ff.mutex);
+  //assert(!qhdl->ff.mutex);
+  (void) in_isr;
 
   _osal_q_lock(qhdl);
   bool success = tu_fifo_write(&qhdl->ff, data);
