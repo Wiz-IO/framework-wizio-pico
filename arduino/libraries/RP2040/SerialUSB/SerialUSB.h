@@ -51,6 +51,11 @@ public:
     {
         end();
         tusb_init(); // initialize TinyUSB
+
+#ifndef PICO_STDIO_USB_LOW_PRIORITY_IRQ
+#define PICO_STDIO_USB_LOW_PRIORITY_IRQ 31 // SDK 140
+#endif
+
         irq_set_exclusive_handler(PICO_STDIO_USB_LOW_PRIORITY_IRQ, SerialUSB_irq);
         irq_set_enabled(PICO_STDIO_USB_LOW_PRIORITY_IRQ, true);
         mutex_init(&_usb_mutex);
@@ -158,7 +163,11 @@ public:
                 return -1; // would deadlock otherwise
             mutex_enter_blocking(&_usb_mutex);
         }
-        auto ret = tud_cdc_peek(0, &c) ? (int)c : -1;
+
+        // auto ret = tud_cdc_peek(0, &c) ? (int)c : -1;
+        // auto ret = tud_cdc_peek(&c) ? (int)c : -1;
+        auto ret = tud_cdc_n_peek(0, &c) ? (int)c : -1; // SDK 140
+        
         mutex_exit(&_usb_mutex);
         return ret;
     }
