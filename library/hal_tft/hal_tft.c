@@ -35,7 +35,7 @@ void tft_spi_put(uint16_t data /* cmd/data/color */,
 }
 
 void tft_spi_put_data(uint16_t data, /* cmd/data/color */
-                      uint16_t size,
+                      uint32_t size,
                       int bits /* 8 for cmd/data or 16 for color */)
 {
     spi_set_format(TFT_SPI_FORMAT(bits));
@@ -48,7 +48,7 @@ void tft_spi_put_data(uint16_t data, /* cmd/data/color */
 }
 
 void tft_spi_put_buffer(uint16_t *buffer,
-                        uint16_t size,
+                        uint32_t size,
                         int bits /* 8 or 16 for draw images */)
 {
     spi_set_format(TFT_SPI_FORMAT(bits));
