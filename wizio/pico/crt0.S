@@ -256,6 +256,12 @@ platform_entry: // symbol for stack traces
     // (e.g. if main is in SRAM and crt0 in flash)
     ldr r1, =runtime_init
     blx r1
+
+///WizIO: startup before main ( syscall.c )
+    ldr r1, =system_init 
+    blx r1
+///WizIO 
+
     ldr r1, =main
     blx r1
     ldr r1, =exit
