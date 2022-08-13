@@ -1,6 +1,6 @@
 ### EXPERIMENTAL FEATURE
 
-Add & Compile not compiled sources with main builder: board_build.modules = build.py
+Add & Compile ( makefile style ) not compiled sources with main builder: board_build.modules = build.py
 
 ```ini
 board_build.modules = 
