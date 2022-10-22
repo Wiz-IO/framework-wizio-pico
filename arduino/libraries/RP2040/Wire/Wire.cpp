@@ -27,8 +27,8 @@ uint8_t TwoWire::requestFrom(uint8_t address, size_t size, bool stopBit)
     if (!stopBit)
         return 0;
     rx.clear();
-    int res = i2c_read_timeout_us(ctx, _slave_address, rx._aucBuffer, size, 0, _timeout_us);
-    if (res < 0)
+    rx._numElems = i2c_read_timeout_us(ctx, _slave_address, rx._aucBuffer, size, 0, _timeout_us);
+    if (rx._numElems < 0)
         size = 0;
     rx._iHead = size;
     return rx.available();
